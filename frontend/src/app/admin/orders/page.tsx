@@ -89,7 +89,7 @@ export default function AdminOrdersPage() {
                   {new Date(order.created_at).toLocaleDateString('tr-TR')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  Müşteri ID: {order.customer_id} <br/>
+                  Müşteri ID: {order.customer_id} <br />
                   <span className="text-xs text-gray-400">
                     Üretici: {order.producer_id ? `ID ${order.producer_id}` : 'Atanmadı'}
                   </span>
@@ -99,12 +99,12 @@ export default function AdminOrdersPage() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                    ${order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
-                      order.status === 'in_production' ? 'bg-blue-100 text-blue-800' : 
-                      'bg-green-100 text-green-800'}`}>
+                    ${order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                      order.status === 'in_production' ? 'bg-blue-100 text-blue-800' :
+                        'bg-green-100 text-green-800'}`}>
                     {order.status === 'pending' ? 'Bekliyor' :
-                     order.status === 'in_production' ? 'Üretimde' :
-                     order.status === 'completed' ? 'Tamamlandı' : order.status}
+                      order.status === 'in_production' ? 'Üretimde' :
+                        order.status === 'completed' ? 'Tamamlandı' : order.status}
                   </span>
                 </td>
               </tr>

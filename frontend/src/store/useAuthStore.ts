@@ -4,7 +4,7 @@ import { persist } from "zustand/middleware";
 interface User {
   id: number;
   email: string;
-  role: "customer" | "producer";
+  role: "customer" | "producer" | "admin";
 }
 
 interface AuthState {
