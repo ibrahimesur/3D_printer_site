@@ -25,7 +25,8 @@ class Order(Base):
     customer_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     producer_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # Assigned later
     
-    stl_file_url = Column(String(500), nullable=False)
+    product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
+    quantity = Column(Integer, default=1, nullable=False)
     status = Column(SAEnum(OrderStatus), default=OrderStatus.PENDING, nullable=False)
     total_price = Column(Float, nullable=True)
     
@@ -36,6 +37,7 @@ class Order(Base):
     # Relationships
     customer = relationship("User", back_populates="customer_orders", foreign_keys=[customer_id])
     producer = relationship("User", back_populates="producer_orders", foreign_keys=[producer_id])
+    product = relationship("Product")
 
     def __repr__(self):
-        return f"<Order(id={self.id}, status={self.status}, price={self.total_price})>"
+        return f"<Order(id={self.id}, product_id={self.product_id}, status={self.status}, price={self.total_price})>"

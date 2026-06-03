@@ -19,21 +19,21 @@ export default function Button({
   ...props
 }: ButtonProps) {
   const baseStyles =
-    "inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-300 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed";
+    "inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed";
 
   const variants = {
     primary:
-      "bg-gradient-to-r from-primary-500 to-primary-600 text-white hover:from-primary-400 hover:to-primary-500 hover:shadow-lg hover:shadow-primary-500/30",
+      "bg-primary text-white hover:bg-primary-hover shadow-sm active:scale-[0.98]",
     secondary:
-      "bg-surface-700/80 text-surface-100 border border-surface-600 hover:bg-surface-600 hover:border-surface-500",
+      "bg-surface text-text-main border border-border hover:bg-background active:scale-[0.98]",
     ghost:
-      "bg-transparent text-surface-300 hover:text-primary-400 hover:bg-surface-800/50",
+      "bg-transparent text-text-muted hover:text-primary hover:bg-background",
   };
 
   const sizes = {
-    sm: "px-4 py-2 text-sm",
-    md: "px-6 py-3 text-base",
-    lg: "px-8 py-4 text-lg",
+    sm: "px-3 py-1.5 text-sm",
+    md: "px-5 py-2.5 text-sm",
+    lg: "px-6 py-3 text-base",
   };
 
   return (

@@ -1,0 +1,22 @@
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime
+from sqlalchemy.sql import func
+from app.db.base import Base
+
+class Product(Base):
+    """Hazır 3D ürün modeli."""
+    __tablename__ = "products"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(100), nullable=False)
+    description = Column(String(500), nullable=True)
+    price = Column(Float, nullable=False)
+    category = Column(String(50), nullable=True)
+    filament_type = Column(String(50), nullable=True)  # PLA, PETG vs.
+    image_url = Column(String(500), nullable=True)
+    is_active = Column(Boolean, default=True)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    def __repr__(self):
+        return f"<Product(id={self.id}, title={self.title}, price={self.price})>"

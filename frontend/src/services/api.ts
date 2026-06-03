@@ -62,6 +62,23 @@ class ApiClient {
   }
 
   // ── Orders ───────────────────────────────────────────────
+  async checkout(items: any[]) {
+    return this.request("/orders/checkout", {
+      method: "POST",
+      body: { items },
+    });
+  }
+
+  async getOrderPool() {
+    return this.request("/orders/pool");
+  }
+
+  async claimOrder(orderId: number) {
+    return this.request(`/orders/${orderId}/claim`, {
+      method: "POST",
+    });
+  }
+
   async createOrder(stlFileUrl: string, notes?: string) {
     return this.request("/orders/", {
       method: "POST",

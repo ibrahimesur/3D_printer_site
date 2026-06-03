@@ -1,78 +1,19 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground: #f0f0f0;
-  --background: #0a0a0a;
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: 'Inter', system-ui, sans-serif;
-}
-
 @layer base {
-  * {
-    @apply border-surface-700;
-  }
-
   body {
-    @apply bg-surface-900 text-surface-100;
-  }
-
-  /* Custom scrollbar */
-  ::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  ::-webkit-scrollbar-track {
-    @apply bg-surface-800;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    @apply bg-surface-500 rounded-full;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-surface-400;
+    @apply bg-background text-text-main font-sans antialiased;
   }
 }
 
 @layer components {
-  .glass-card {
-    @apply bg-surface-800/60 backdrop-blur-xl border border-surface-700/50 rounded-2xl;
-  }
-
-  .glass-card-hover {
-    @apply glass-card transition-all duration-300 hover:border-primary-500/30 hover:shadow-lg hover:shadow-primary-500/10;
-  }
-
-  .glow-border {
-    @apply border border-primary-500/30 shadow-[0_0_15px_rgba(0,128,255,0.15)];
-  }
-
-  .text-gradient {
-    @apply bg-gradient-to-r from-primary-400 to-accent-400 bg-clip-text text-transparent;
-  }
-
-  .btn-primary {
-    @apply px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold rounded-xl
-           transition-all duration-300 hover:from-primary-400 hover:to-primary-500
-           hover:shadow-lg hover:shadow-primary-500/30 active:scale-[0.98];
-  }
-
-  .btn-secondary {
-    @apply px-6 py-3 bg-surface-700/80 text-surface-100 font-semibold rounded-xl border border-surface-600
-           transition-all duration-300 hover:bg-surface-600 hover:border-surface-500 active:scale-[0.98];
-  }
-
   .input-field {
-    @apply w-full px-4 py-3 bg-surface-800 border border-surface-600 rounded-xl text-surface-100
-           placeholder:text-surface-400 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50
+    @apply w-full px-4 py-3 bg-surface border border-border rounded-lg text-text-main
+           placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary
            transition-all duration-200;
   }
 }

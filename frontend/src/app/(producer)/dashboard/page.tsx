@@ -1,110 +1,184 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Button from "@/components/common/Button";
+import api from "@/services/api";
+
+interface Order {
+  id: number;
+  customer_id: number;
+  product_id: number;
+  quantity: number;
+  status: string;
+  total_price: number;
+}
 
 export default function ProducerDashboard() {
-  const pendingOrders = [
-    { id: 1, customer: "ahmet@email.com", file: "bracket_v2.stl", date: "2024-01-15", price: "₺35.00" },
-    { id: 2, customer: "ayse@email.com", file: "phone_stand.stl", date: "2024-01-15", price: "₺22.50" },
-    { id: 3, customer: "mehmet@email.com", file: "gear_assembly.stl", date: "2024-01-14", price: "₺78.00" },
-  ];
+  const [pendingOrders, setPendingOrders] = useState<Order[]>([]);
+  const [activeJobs, setActiveJobs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const activeJobs = [
-    { id: 4, file: "lamp_shade.stl", progress: 65, eta: "2 saat", filament: "PLA" },
-    { id: 5, file: "figurine_v3.stl", progress: 30, eta: "4 saat", filament: "PETG" },
-  ];
+  useEffect(() => {
+    // Initial static active jobs for UI demonstration
+    setActiveJobs([
+      { id: 104, file: "lamp_shade.stl", progress: 65, eta: "2 saat", filament: "PLA" },
+      { id: 105, file: "figurine_v3.stl", progress: 30, eta: "4 saat", filament: "PETG" },
+    ]);
+    fetchPool();
+  }, []);
+
+  const fetchPool = async () => {
+    try {
+      setLoading(true);
+      const data = await api.getOrderPool() as Order[];
+      setPendingOrders(data);
+    } catch (err) {
+      console.error("Havuz yüklenirken hata oluştu:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClaim = async (orderId: number) => {
+    try {
+      const claimedOrder = await api.claimOrder(orderId) as Order;
+      
+      // Remove from pending
+      setPendingOrders((prev) => prev.filter((o) => o.id !== orderId));
+      
+      // Add to active jobs
+      setActiveJobs((prev) => [
+        {
+          id: claimedOrder.id,
+          file: `Ürün #${claimedOrder.product_id} (x${claimedOrder.quantity})`,
+          progress: 0,
+          eta: "Hesaplanıyor...",
+          filament: "Belirsiz",
+        },
+        ...prev,
+      ]);
+    } catch (err: any) {
+      console.error("İş alınırken hata:", err);
+      alert(err.message || "Bu iş alınamadı. Başkası tarafından alınmış olabilir.");
+      // Refresh the pool in case it was claimed
+      fetchPool();
+    }
+  };
 
   return (
-    <div className="relative min-h-screen">
-      {/* Background */}
-      <div className="absolute inset-0 bg-grid-pattern bg-grid opacity-20" />
-
-      <div className="relative z-10 max-w-7xl mx-auto px-4 py-12">
+    <div className="min-h-screen bg-background">
+      <div className="max-w-6xl mx-auto px-4 py-10">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-10 gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-display font-bold">Üretici <span className="text-gradient">Paneli</span></h1>
-            <p className="text-surface-400 mt-1">Siparişlerinizi yönetin ve kazancınızı takip edin.</p>
+            <h1 className="text-2xl font-bold text-text-main">Üretici Paneli</h1>
+            <p className="text-text-muted text-sm mt-1">Siparişlerinizi yönetin ve kazancınızı takip edin.</p>
           </div>
-          <Button variant="primary" size="sm">
-            <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
-            </svg>
-            Profili Düzenle
-          </Button>
+          <div className="flex gap-3">
+            <Button variant="secondary" size="sm" onClick={fetchPool} disabled={loading}>
+              {loading ? "Yenileniyor..." : "Yenile"}
+            </Button>
+            <Button variant="secondary" size="sm">Profili Düzenle</Button>
+          </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-          {[
-            { label: "Bakiye", value: "₺2,450.00", icon: "M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z", color: "text-accent-400" },
-            { label: "Bekleyen Sipariş", value: "3", icon: "M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z", color: "text-yellow-400" },
-            { label: "Aktif İş", value: "2", icon: "M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z", color: "text-primary-400" },
-            { label: "Toplam Teslim", value: "148", icon: "M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z", color: "text-green-400" },
-          ].map((stat) => (
-            <div key={stat.label} className="glass-card-hover p-6">
-              <div className="flex items-center gap-3 mb-3">
-                <svg className={`w-5 h-5 ${stat.color}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d={stat.icon} />
-                </svg>
-                <span className="text-sm text-surface-400">{stat.label}</span>
-              </div>
-              <p className="text-2xl font-display font-bold text-surface-100">{stat.value}</p>
-            </div>
-          ))}
+        {/* Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="bg-surface border border-border rounded-xl p-5 shadow-sm">
+            <p className="text-sm text-text-muted mb-1">Bakiye</p>
+            <p className="text-2xl font-bold text-primary">₺2,450</p>
+          </div>
+          <div className="bg-surface border border-border rounded-xl p-5 shadow-sm">
+            <p className="text-sm text-text-muted mb-1">Bekleyen</p>
+            <p className="text-2xl font-bold text-amber-500">{pendingOrders.length}</p>
+          </div>
+          <div className="bg-surface border border-border rounded-xl p-5 shadow-sm">
+            <p className="text-sm text-text-muted mb-1">Aktif İş</p>
+            <p className="text-2xl font-bold text-primary">{activeJobs.length}</p>
+          </div>
+          <div className="bg-surface border border-border rounded-xl p-5 shadow-sm">
+            <p className="text-sm text-text-muted mb-1">Teslim Edilen</p>
+            <p className="text-2xl font-bold text-text-main">148</p>
+          </div>
         </div>
 
-        {/* Two Column Layout */}
-        <div className="grid lg:grid-cols-2 gap-8">
+        {/* Two Column */}
+        <div className="grid lg:grid-cols-2 gap-6">
           {/* Pending Orders */}
-          <div className="glass-card p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-display font-semibold">Bekleyen Siparişler</h2>
-              <span className="px-3 py-1 text-xs font-medium rounded-full bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
+          <div className="bg-surface border border-border rounded-xl p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="font-semibold text-text-main">Bekleyen Siparişler</h2>
+              <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-amber-50 text-amber-600 border border-amber-200">
                 {pendingOrders.length} yeni
               </span>
             </div>
-            <div className="space-y-4">
-              {pendingOrders.map((order) => (
-                <div key={order.id} className="flex items-center justify-between p-4 rounded-xl bg-surface-700/30 border border-surface-700/50 hover:border-surface-600 transition-colors">
-                  <div className="flex-1">
-                    <p className="font-medium text-surface-200 text-sm">{order.file}</p>
-                    <p className="text-xs text-surface-500 mt-1">{order.customer} · {order.date}</p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-accent-400">{order.price}</span>
-                    <Button variant="primary" size="sm">Kabul Et</Button>
-                  </div>
+            
+            <div className="space-y-3">
+              {loading && pendingOrders.length === 0 ? (
+                <div className="text-center py-6 text-text-muted text-sm">Havuz yükleniyor...</div>
+              ) : pendingOrders.length === 0 ? (
+                <div className="text-center py-8 bg-background border border-dashed border-border rounded-lg">
+                  <p className="text-text-muted text-sm">Şu an uygun iş bulunmuyor.</p>
                 </div>
-              ))}
+              ) : (
+                pendingOrders.map((order) => (
+                  <div key={order.id} className="flex items-center justify-between p-4 rounded-lg bg-background border border-border hover:border-primary transition-colors">
+                    <div>
+                      <p className="font-medium text-text-main text-sm">Sipariş #{order.id}</p>
+                      <p className="text-xs text-text-muted mt-1">
+                        Ürün: #{order.product_id} · Adet: {order.quantity}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="text-sm font-semibold text-text-main">
+                        {order.total_price ? `₺${order.total_price.toFixed(2)}` : 'Fiyat Belirsiz'}
+                      </span>
+                      <button 
+                        onClick={() => handleClaim(order.id)}
+                        className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+                      >
+                        İşi Al
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
           {/* Active Jobs */}
-          <div className="glass-card p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-display font-semibold">Aktif İşler</h2>
-              <span className="px-3 py-1 text-xs font-medium rounded-full bg-primary-500/10 text-primary-400 border border-primary-500/20">
+          <div className="bg-surface border border-border rounded-xl p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="font-semibold text-text-main">Aktif İşler</h2>
+              <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-primary/10 text-primary border border-primary/20">
                 {activeJobs.length} devam ediyor
               </span>
             </div>
-            <div className="space-y-4">
-              {activeJobs.map((job) => (
-                <div key={job.id} className="p-4 rounded-xl bg-surface-700/30 border border-surface-700/50">
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <p className="font-medium text-surface-200 text-sm">{job.file}</p>
-                      <p className="text-xs text-surface-500 mt-1">{job.filament} · Kalan: {job.eta}</p>
-                    </div>
-                    <span className="text-sm font-semibold text-primary-400">%{job.progress}</span>
-                  </div>
-                  {/* Progress Bar */}
-                  <div className="w-full h-2 bg-surface-700 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-primary-500 to-accent-500 rounded-full transition-all duration-500"
-                      style={{ width: `${job.progress}%` }}
-                    />
-                  </div>
+            
+            <div className="space-y-3">
+              {activeJobs.length === 0 ? (
+                <div className="text-center py-8 bg-background border border-dashed border-border rounded-lg">
+                  <p className="text-text-muted text-sm">Aktif işiniz bulunmuyor.</p>
                 </div>
-              ))}
+              ) : (
+                activeJobs.map((job) => (
+                  <div key={job.id} className="p-4 rounded-lg bg-background border border-border">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <p className="font-medium text-text-main text-sm">{job.file}</p>
+                        <p className="text-xs text-text-muted mt-1">{job.filament} · Kalan: {job.eta}</p>
+                      </div>
+                      <span className="text-sm font-bold text-primary">%{job.progress}</span>
+                    </div>
+                    <div className="w-full h-2.5 bg-background border border-border rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary rounded-full transition-all duration-1000 ease-out"
+                        style={{ width: `${job.progress}%` }}
+                      />
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
