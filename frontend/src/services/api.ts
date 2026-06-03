@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api/v1";
 
 interface RequestOptions {
   method?: string;
@@ -17,8 +17,21 @@ class ApiClient {
   }
 
   private getAuthHeaders(): Record<string, string> {
-    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
-    return token ? { Authorization: `Bearer ${token}` } : {};
+    if (typeof window !== "undefined") {
+      try {
+        const authStorage = localStorage.getItem("auth-storage");
+        if (authStorage) {
+          const parsed = JSON.parse(authStorage);
+          const token = parsed?.state?.token;
+          if (token) {
+            return { Authorization: `Bearer ${token}` };
+          }
+        }
+      } catch (e) {
+        // ignore parse error
+      }
+    }
+    return {};
   }
 
   async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
@@ -115,6 +128,15 @@ class ApiClient {
 
   async listFilaments() {
     return this.request("/pricing/filaments");
+  }
+
+  // ── Admin ────────────────────────────────────────────────
+  async getAdminUsers() {
+    return this.request("/admin/users");
+  }
+
+  async getAdminOrders() {
+    return this.request("/admin/orders");
   }
 }
 

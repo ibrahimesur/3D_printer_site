@@ -9,6 +9,7 @@ class UserRole(str, enum.Enum):
     """Kullanıcı rolleri: müşteri veya üretici."""
     CUSTOMER = "customer"
     PRODUCER = "producer"
+    ADMIN = "admin"
 
 
 class User(Base):

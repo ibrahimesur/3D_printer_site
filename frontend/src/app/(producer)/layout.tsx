@@ -1,4 +1,5 @@
 import Navbar from "@/components/common/Navbar";
+import ProtectedRoute from "@/components/common/ProtectedRoute";
 
 export default function ProducerLayout({
   children,
@@ -8,7 +9,9 @@ export default function ProducerLayout({
   return (
     <>
       <Navbar />
-      <main className="pt-16">{children}</main>
+      <ProtectedRoute allowedRoles={["producer"]}>
+        <main className="pt-16">{children}</main>
+      </ProtectedRoute>
     </>
   );
 }
