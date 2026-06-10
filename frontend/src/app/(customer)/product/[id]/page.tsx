@@ -290,15 +290,13 @@ export default function ProductDetailPage() {
         {/* Hero */}
         <div className="overflow-hidden rounded-3xl border border-border bg-surface shadow-sm">
           <div className="grid lg:grid-cols-2">
-            <div className="relative flex min-h-[420px] items-center justify-center overflow-hidden bg-gradient-to-br from-amber-50 via-orange-50 to-background p-10 lg:min-h-[520px]">
-              <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
-              <div className="pointer-events-none absolute -bottom-20 -left-10 h-56 w-56 rounded-full bg-amber-200/30 blur-3xl" />
+            <div className="relative flex min-h-[420px] items-center justify-center overflow-hidden bg-surface p-10 lg:min-h-[520px]">
 
               {product.image_url ? (
                 <img
                   src={product.image_url}
                   alt={product.title}
-                  className="relative z-10 max-h-[440px] w-full max-w-md object-contain drop-shadow-2xl transition-transform duration-500 hover:scale-105"
+                  className="relative z-10 max-h-[440px] w-full max-w-md object-contain drop-shadow-2xl"
                 />
               ) : (
                 <div className="relative z-10 flex flex-col items-center gap-4 text-center">
