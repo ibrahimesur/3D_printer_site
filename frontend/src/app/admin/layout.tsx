@@ -21,7 +21,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="w-64 bg-gray-900 text-white flex-shrink-0">
           <div className="h-full flex flex-col">
             <div className="flex items-center justify-center h-20 border-b border-gray-800 overflow-hidden">
-              <img src="/PrintAgo.png" alt="PrintAgo Logo" className="h-16 w-auto object-contain scale-[1.3]" />
+              <img src="/printago.svg" alt="PrintAgo Logo" className="h-12 w-auto object-contain" />
             </div>
             
             <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
