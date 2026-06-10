@@ -10,7 +10,7 @@ start "Backend (FastAPI)" cmd /k "cd backend && .venv\Scripts\activate.bat && uv
 start "Frontend (Next.js)" cmd /k "cd frontend && npm run dev"
 
 echo Sunucularin hazir olmasi icin kisa bir sure bekleniyor...
-timeout /t 5 /nobreak > nul
+ping 127.0.0.1 -n 6 > nul
 
 :: Chrome'u başlatır
 echo Chrome tarayici aciliyor...

@@ -14,13 +14,17 @@ if not exist ".venv" (
 )
 
 echo.
-echo [2/3] Backend gereksinimleri yukleniyor...
+echo [2/4] Backend gereksinimleri yukleniyor...
 call .venv\Scripts\activate.bat
 pip install -r requirements.txt
+
+echo.
+echo [3/4] Veritabani hazirlaniyor...
+python setup_db.py
 cd ..
 
 echo.
-echo [3/3] Frontend (Node.js) paketleri yukleniyor...
+echo [4/4] Frontend (Node.js) paketleri yukleniyor...
 cd frontend
 call npm install
 cd ..
