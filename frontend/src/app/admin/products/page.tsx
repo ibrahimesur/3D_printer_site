@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import api from "@/services/api";
 import { supabase } from "@/utils/supabase";
+import Cropper from 'react-easy-crop';
+import getCroppedImg from '@/utils/cropImage';
 
 interface Product {
   id: number;
@@ -35,35 +37,63 @@ export default function AdminProductsPage() {
   });
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  
+  // Crop state
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+  const [isCropping, setIsCropping] = useState(false);
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      if (!e.target.files || e.target.files.length === 0) return;
+  const onFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.addEventListener('load', () => setImageToCrop(reader.result as string));
+      reader.readAsDataURL(file);
+      setCropModalOpen(true);
+      if (e.target) e.target.value = '';
+    }
+  };
+
+  const onCropComplete = (croppedArea: any, croppedAreaPixels: any) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  };
+
+  const handleCropConfirm = async () => {
+    try {
+      setIsCropping(true);
+      const croppedImageBlob = await getCroppedImg(imageToCrop!, croppedAreaPixels);
+      if (!croppedImageBlob) throw new Error("Kırpma başarısız oldu");
+
       setUploadingImage(true);
-      
-      const fileExt = file.name.split('.').pop();
+      setCropModalOpen(false);
+
+      const fileExt = "jpeg";
       const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
-      const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('product-images')
-        .upload(filePath, file);
+        .upload(fileName, croppedImageBlob);
 
-      if (uploadError) {
-        throw uploadError;
-      }
+      if (uploadError) throw uploadError;
 
-      const { data } = supabase.storage.from('product-images').getPublicUrl(filePath);
+      const { data } = supabase.storage.from('product-images').getPublicUrl(fileName);
       
       setFormData(prev => ({ ...prev, image_url: data.publicUrl }));
+      setImageToCrop(null);
     } catch (error: any) {
-      alert("Resim yüklenirken hata oluştu: " + error.message);
+      alert("Resim yüklenirken hata: " + error.message);
     } finally {
+      setIsCropping(false);
       setUploadingImage(false);
-      // Reset file input
-      if (e.target) e.target.value = '';
     }
+  };
+
+  const cancelCrop = () => {
+    setCropModalOpen(false);
+    setImageToCrop(null);
   };
 
   useEffect(() => {
@@ -299,7 +329,7 @@ export default function AdminProductsPage() {
                         <input type="text" name="image_url" placeholder="Görsel URL (veya yandaki butondan yükle)" value={formData.image_url} onChange={handleChange} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500" />
                         <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg border border-gray-300 flex items-center justify-center transition-colors relative overflow-hidden">
                           {uploadingImage ? "Yükleniyor..." : "Dosya Seç"}
-                          <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploadingImage} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+                          <input type="file" accept="image/*" onChange={onFileSelect} disabled={uploadingImage || isCropping} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
                         </label>
                       </div>
                       {formData.image_url && (
@@ -320,6 +350,50 @@ export default function AdminProductsPage() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Crop Modal */}
+      {cropModalOpen && imageToCrop && (
+        <div className="fixed inset-0 z-[60] overflow-y-auto" aria-labelledby="crop-modal" role="dialog" aria-modal="true">
+          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:p-0">
+            <div className="fixed inset-0 bg-gray-900 bg-opacity-90 transition-opacity" onClick={cancelCrop}></div>
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+            <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl w-full">
+              <div className="p-6">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Resmi Kırp (3:4 Oranı)</h3>
+                <div className="relative h-96 w-full bg-gray-100 rounded-lg overflow-hidden">
+                  <Cropper
+                    image={imageToCrop}
+                    crop={crop}
+                    zoom={zoom}
+                    aspect={3 / 4}
+                    onCropChange={setCrop}
+                    onCropComplete={onCropComplete}
+                    onZoomChange={setZoom}
+                  />
+                </div>
+                <div className="mt-6 flex justify-between items-center">
+                  <input
+                    type="range"
+                    value={zoom}
+                    min={1}
+                    max={3}
+                    step={0.1}
+                    aria-labelledby="Zoom"
+                    onChange={(e) => setZoom(Number(e.target.value))}
+                    className="w-1/2"
+                  />
+                  <div className="flex gap-3">
+                    <button type="button" onClick={cancelCrop} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">İptal</button>
+                    <button type="button" onClick={handleCropConfirm} disabled={isCropping} className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50">
+                      {isCropping ? "İşleniyor..." : "Kes ve Yükle"}
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
