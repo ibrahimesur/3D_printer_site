@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import api from "@/services/api";
+import { supabase } from "@/utils/supabase";
 
 interface Product {
   id: number;
@@ -33,6 +34,37 @@ export default function AdminProductsPage() {
     is_active: true,
   });
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      if (!e.target.files || e.target.files.length === 0) return;
+      const file = e.target.files[0];
+      setUploadingImage(true);
+      
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('product-images')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const { data } = supabase.storage.from('product-images').getPublicUrl(filePath);
+      
+      setFormData(prev => ({ ...prev, image_url: data.publicUrl }));
+    } catch (error: any) {
+      alert("Resim yüklenirken hata oluştu: " + error.message);
+    } finally {
+      setUploadingImage(false);
+      // Reset file input
+      if (e.target) e.target.value = '';
+    }
+  };
 
   useEffect(() => {
     fetchProducts();
@@ -262,8 +294,19 @@ export default function AdminProductsPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Görsel URL</label>
-                      <input type="url" name="image_url" placeholder="https://..." value={formData.image_url} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500" />
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Ürün Görseli</label>
+                      <div className="flex gap-2">
+                        <input type="text" name="image_url" placeholder="Görsel URL (veya yandaki butondan yükle)" value={formData.image_url} onChange={handleChange} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500" />
+                        <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg border border-gray-300 flex items-center justify-center transition-colors relative overflow-hidden">
+                          {uploadingImage ? "Yükleniyor..." : "Dosya Seç"}
+                          <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploadingImage} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+                        </label>
+                      </div>
+                      {formData.image_url && (
+                        <div className="mt-3">
+                          <img src={formData.image_url} alt="Preview" className="h-24 object-contain rounded-md border border-gray-200" />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
