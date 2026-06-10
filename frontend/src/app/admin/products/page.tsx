@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import api from "@/services/api";
 import { supabase } from "@/utils/supabase";
-import Cropper from 'react-easy-crop';
+import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 import getCroppedImg from '@/utils/cropImage';
 
 interface Product {
@@ -41,9 +42,9 @@ export default function AdminProductsPage() {
   // Crop state
   const [cropModalOpen, setCropModalOpen] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+  const [crop, setCrop] = useState<Crop>({ unit: '%', width: 50, height: 50, x: 25, y: 25 });
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop | null>(null);
+  const [imageRef, setImageRef] = useState<HTMLImageElement | null>(null);
   const [isCropping, setIsCropping] = useState(false);
 
   const onFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,21 +58,17 @@ export default function AdminProductsPage() {
     }
   };
 
-  const onCropComplete = (croppedArea: any, croppedAreaPixels: any) => {
-    setCroppedAreaPixels(croppedAreaPixels);
-  };
-
   const handleCropConfirm = async () => {
     try {
+      if (!imageRef || !completedCrop) return;
       setIsCropping(true);
-      const croppedImageBlob = await getCroppedImg(imageToCrop!, croppedAreaPixels);
+      
+      const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.jpg`;
+      const croppedImageBlob = await getCroppedImg(imageRef, completedCrop, fileName);
       if (!croppedImageBlob) throw new Error("Kırpma başarısız oldu");
 
       setUploadingImage(true);
       setCropModalOpen(false);
-
-      const fileExt = "jpeg";
-      const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('product-images')
@@ -361,34 +358,23 @@ export default function AdminProductsPage() {
           <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:p-0">
             <div className="fixed inset-0 bg-gray-900 bg-opacity-90 transition-opacity" onClick={cancelCrop}></div>
             <span className="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
-            <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl w-full">
+            <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl w-full">
               <div className="p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Resmi Kırp (3:4 Oranı)</h3>
-                <div className="relative h-96 w-full bg-gray-100 rounded-lg overflow-hidden">
-                  <Cropper
-                    image={imageToCrop}
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Resmi Kırp (Köşelerden Çekin)</h3>
+                <div className="relative max-h-[60vh] w-full bg-gray-100 rounded-lg overflow-auto flex items-center justify-center border border-gray-200">
+                  <ReactCrop
                     crop={crop}
-                    zoom={zoom}
+                    onChange={(_, percentCrop) => setCrop(percentCrop)}
+                    onComplete={(c) => setCompletedCrop(c)}
                     aspect={3 / 4}
-                    onCropChange={setCrop}
-                    onCropComplete={onCropComplete}
-                    onZoomChange={setZoom}
-                  />
+                  >
+                    <img src={imageToCrop} onLoad={(e) => setImageRef(e.currentTarget)} alt="Crop me" className="max-h-[60vh] w-auto object-contain" />
+                  </ReactCrop>
                 </div>
-                <div className="mt-6 flex justify-between items-center">
-                  <input
-                    type="range"
-                    value={zoom}
-                    min={1}
-                    max={3}
-                    step={0.1}
-                    aria-labelledby="Zoom"
-                    onChange={(e) => setZoom(Number(e.target.value))}
-                    className="w-1/2"
-                  />
+                <div className="mt-6 flex justify-end items-center">
                   <div className="flex gap-3">
                     <button type="button" onClick={cancelCrop} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">İptal</button>
-                    <button type="button" onClick={handleCropConfirm} disabled={isCropping} className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50">
+                    <button type="button" onClick={handleCropConfirm} disabled={isCropping || !completedCrop} className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50">
                       {isCropping ? "İşleniyor..." : "Kes ve Yükle"}
                     </button>
                   </div>
