@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api/v1";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
 
 interface RequestOptions {
   method?: string;
@@ -137,6 +137,42 @@ class ApiClient {
 
   async getAdminOrders() {
     return this.request("/admin/orders");
+  }
+  // ── Products ─────────────────────────────────────────────
+  async getProducts() {
+    return this.request("/products");
+  }
+
+  async getAdminProducts() {
+    // Admin might need to see inactive ones too if there was an endpoint for it,
+    // but for now we'll just use the public one if admin one doesn't exist.
+    // Actually wait, I should probably add an admin endpoint to see ALL products.
+    // Let's just use /products for now, or assume the backend /products returns all if not filtered.
+    // The user requested: "Müşterilerin göreceği genel ürünleri çekmek için public bir GET /api/v1/products endpoint'i yaz (Sadece is_active=True olanları dönsün)."
+    // So admin should probably see all. I'll add a quick GET /admin/products in the API too if needed.
+    // Let's just use fetch for /admin/products if we added it, or we can just fetch /products for now.
+    // Actually, I'll update the backend to have GET /admin/products to return all products.
+    return this.request("/admin/products");
+  }
+
+  async createProduct(productData: any) {
+    return this.request("/admin/products", {
+      method: "POST",
+      body: productData,
+    });
+  }
+
+  async updateProduct(id: number, productData: any) {
+    return this.request(`/admin/products/${id}`, {
+      method: "PUT",
+      body: productData,
+    });
+  }
+
+  async deleteProduct(id: number) {
+    return this.request(`/admin/products/${id}`, {
+      method: "DELETE",
+    });
   }
 }
 
