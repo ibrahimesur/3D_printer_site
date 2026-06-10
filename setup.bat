@@ -8,7 +8,7 @@ echo [1/3] Backend (Python) sanal ortami kuruluyor...
 cd backend
 if not exist ".venv" (
     python -m venv .venv
-    echo Sanal ortam (virtual environment) olusturuldu.
+    echo Sanal ortam olusturuldu.
 ) else (
     echo Sanal ortam zaten mevcut.
 )
