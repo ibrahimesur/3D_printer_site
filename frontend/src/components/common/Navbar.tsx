@@ -11,7 +11,7 @@ export default function Navbar() {
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  
+
   const totalItems = useCartStore((state) => state.totalItems);
   const { isAuthenticated, user, logout } = useAuthStore();
 
@@ -30,7 +30,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <img src="/PrintAgoLogo.svg" alt="PrintAgo Logo" className="h-12 w-auto" />
+            <img src="/PrintAgoLogo.svg" alt="PrintAgo Logo" className="h-12 w-auto object-contain" />
           </Link>
 
           {/* Desktop Nav */}
@@ -61,7 +61,7 @@ export default function Navbar() {
               )}
             </Link>
             <div className="w-px h-6 bg-border mx-1"></div>
-            
+
             {isMounted ? (
               isAuthenticated() ? (
                 <>
