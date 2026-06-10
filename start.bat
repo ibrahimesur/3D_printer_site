@@ -4,7 +4,7 @@ echo 3D Printer Sitesi - Backend ve Frontend Baslatiliyor...
 echo =======================================================
 
 :: Backend'i yeni bir komut istemcisi penceresinde başlatır
-start "Backend (FastAPI)" cmd /k "cd backend && .venv\Scripts\activate.bat && uvicorn app.main:app --port 8001"
+start "Backend (FastAPI)" cmd /k "cd backend && .venv\Scripts\activate.bat && python -m uvicorn app.main:app --port 8001"
 
 :: Frontend'i yeni bir komut istemcisi penceresinde başlatır
 start "Frontend (Next.js)" cmd /k "cd frontend && npm run dev"
