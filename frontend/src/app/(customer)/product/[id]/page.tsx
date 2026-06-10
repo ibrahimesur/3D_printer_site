@@ -83,11 +83,11 @@ function ProductCard({ product }: { product: Product }) {
     >
       <div className="flex aspect-square w-full items-center justify-center overflow-hidden bg-white">
         {product.image_url ? (
-          <img
-            src={product.image_url}
-            alt={product.title}
-            className="h-full w-full object-contain p-4 transition-transform duration-300 group-hover:scale-105"
-          />
+            <img
+              src={product.image_url}
+              alt={product.title}
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
         ) : (
           <span className="text-5xl">📦</span>
         )}
@@ -303,7 +303,7 @@ export default function ProductDetailPage() {
                   <img
                     src={product.image_url}
                     alt={product.title}
-                    className="h-full w-full object-contain p-4 transition-transform duration-300 hover:scale-105"
+                    className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
                   />
                 </button>
               ) : (
