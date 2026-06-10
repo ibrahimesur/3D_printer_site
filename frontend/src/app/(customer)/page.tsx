@@ -123,9 +123,9 @@ export default function HomePage() {
                     className="bg-surface border border-border rounded-xl overflow-hidden hover:shadow-md transition-shadow group block flex flex-col h-full"
                   >
                     {/* Product Image Placeholder */}
-                    <div className="bg-gray-100 h-40 flex items-center justify-center text-5xl overflow-hidden">
+                    <div className="bg-white aspect-square w-full flex items-center justify-center text-5xl overflow-hidden border-b border-border/30">
                       {product.image_url ? (
-                        <img src={product.image_url} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        <img src={product.image_url} alt={product.title} className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300" />
                       ) : (
                         <span className="text-gray-400 text-sm group-hover:scale-105 transition-transform duration-300">Görsel Yok</span>
                       )}

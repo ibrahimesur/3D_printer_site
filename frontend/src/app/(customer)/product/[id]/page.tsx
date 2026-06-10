@@ -81,12 +81,12 @@ function ProductCard({ product }: { product: Product }) {
       href={`/product/${product.id}`}
       className="group flex flex-col overflow-hidden rounded-xl border border-border bg-surface transition-shadow hover:shadow-md"
     >
-      <div className="flex h-40 items-center justify-center overflow-hidden bg-gray-100">
+      <div className="flex aspect-square w-full items-center justify-center overflow-hidden bg-white">
         {product.image_url ? (
           <img
             src={product.image_url}
             alt={product.title}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="h-full w-full object-contain p-4 transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
           <span className="text-5xl">📦</span>
@@ -132,6 +132,7 @@ export default function ProductDetailPage() {
   const [isAdded, setIsAdded] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const loadReviews = async (id: number) => {
     try {
@@ -290,14 +291,21 @@ export default function ProductDetailPage() {
         {/* Hero */}
         <div className="overflow-hidden rounded-3xl border border-border bg-surface shadow-sm">
           <div className="grid lg:grid-cols-2">
-            <div className="relative flex min-h-[420px] items-center justify-center overflow-hidden bg-surface p-10 lg:min-h-[520px]">
+            <div className="relative flex min-h-[420px] items-center justify-center bg-surface p-6 lg:min-h-[520px]">
 
               {product.image_url ? (
-                <img
-                  src={product.image_url}
-                  alt={product.title}
-                  className="relative z-10 max-h-[440px] w-full max-w-md object-contain drop-shadow-2xl"
-                />
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(true)}
+                  className="relative z-10 w-full aspect-[4/5] max-w-md overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-border/50 transition-all hover:shadow-md cursor-zoom-in"
+                  title="Resmi Büyüt"
+                >
+                  <img
+                    src={product.image_url}
+                    alt={product.title}
+                    className="h-full w-full object-contain p-4 transition-transform duration-300 hover:scale-105"
+                  />
+                </button>
               ) : (
                 <div className="relative z-10 flex flex-col items-center gap-4 text-center">
                   <div className="flex h-48 w-48 items-center justify-center rounded-full bg-white/70 shadow-xl ring-1 ring-amber-200/60 backdrop-blur-sm">
@@ -646,6 +654,30 @@ export default function ProductDetailPage() {
           </Button>
         </div>
       </div>
+
+      {/* Resim Büyütme Modalı */}
+      {isModalOpen && product?.image_url && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm transition-opacity"
+          onClick={() => setIsModalOpen(false)}
+        >
+          <button 
+            className="absolute right-4 top-4 md:right-8 md:top-8 rounded-full bg-white/10 p-3 text-white transition-colors hover:bg-white/30"
+            onClick={() => setIsModalOpen(false)}
+            title="Kapat"
+          >
+            <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <img
+            src={product.image_url}
+            alt={product.title}
+            className="max-h-[90vh] max-w-[90vw] object-contain rounded-xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 }
