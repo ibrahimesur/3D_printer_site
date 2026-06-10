@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     
     # Database
-    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/printer_db"
+    DATABASE_URL: str = "sqlite:///./printer_db.db"
     
     # Security
     SECRET_KEY: str = "super-secret-key-change-in-production"
