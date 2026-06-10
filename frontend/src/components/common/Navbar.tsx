@@ -30,7 +30,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <img src="/PrintAgoLogo.svg" alt="PrintAgo Logo" className="h-12 w-auto object-contain" />
+            <img src="/PrintAgo.png" alt="PrintAgo Logo" className="h-12 w-auto object-contain" />
           </Link>
 
           {/* Desktop Nav */}
