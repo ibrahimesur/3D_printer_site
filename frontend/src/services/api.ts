@@ -143,6 +143,10 @@ class ApiClient {
     return this.request("/products");
   }
 
+  async getProduct(id: number) {
+    return this.request(`/products/${id}`);
+  }
+
   async getAdminProducts() {
     // Admin might need to see inactive ones too if there was an endpoint for it,
     // but for now we'll just use the public one if admin one doesn't exist.

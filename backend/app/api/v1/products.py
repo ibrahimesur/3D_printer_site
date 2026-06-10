@@ -89,3 +89,11 @@ def get_products(db: Session = Depends(get_db)):
     """Müşteriler için aktif ürünleri listeler."""
     products = db.query(Product).filter(Product.is_active == True).all()
     return products
+
+@router.get("/products/{id}", response_model=ProductResponse)
+def get_product(id: int, db: Session = Depends(get_db)):
+    """Müşteriler için tek bir ürünün detayını getirir."""
+    product = db.query(Product).filter(Product.id == id, Product.is_active == True).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Ürün bulunamadı")
+    return product
