@@ -460,9 +460,6 @@ export default function ProductDetailPage() {
         {/* Benzer Ürünler */}
         <section>
           <div className="mb-6">
-            <p className="mb-1 text-xs font-bold uppercase tracking-widest text-primary">
-              Keşfet
-            </p>
             <h2 className="text-2xl font-bold text-text-main">Benzer Ürünler</h2>
           </div>
 
@@ -496,9 +493,6 @@ export default function ProductDetailPage() {
           <div className="border-b border-border bg-gradient-to-r from-background to-amber-50/50 px-8 py-6">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
-                <p className="mb-1 text-xs font-bold uppercase tracking-widest text-primary">
-                  Müşteri Deneyimi
-                </p>
                 <h2 className="text-2xl font-bold text-text-main">
                   Yorumlar & Puanlar
                 </h2>
