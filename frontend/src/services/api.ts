@@ -196,6 +196,22 @@ class ApiClient {
       body: data,
     });
   }
+
+  async getFavorites() {
+    return this.request("/favorites");
+  }
+
+  async checkFavorite(productId: number) {
+    return this.request(`/favorites/check/${productId}`);
+  }
+
+  async addFavorite(productId: number) {
+    return this.request(`/favorites/${productId}`, { method: "POST" });
+  }
+
+  async removeFavorite(productId: number) {
+    return this.request(`/favorites/${productId}`, { method: "DELETE" });
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);

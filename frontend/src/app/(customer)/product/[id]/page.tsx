@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Button from "@/components/common/Button";
 import { useCartStore } from "@/store/useCartStore";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -114,6 +114,7 @@ function ProductCard({ product }: { product: Product }) {
 
 export default function ProductDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const productId = params.id as string;
 
   const [product, setProduct] = useState<Product | null>(null);
@@ -129,6 +130,8 @@ export default function ProductDetailPage() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [quantity, setQuantity] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
 
   const loadReviews = async (id: number) => {
     try {
@@ -166,10 +169,19 @@ export default function ProductDetailPage() {
       }
 
       await loadReviews(id);
+
+      if (isAuthenticated()) {
+        try {
+          const status = (await api.checkFavorite(id)) as { is_favorited: boolean };
+          setIsFavorited(status.is_favorited);
+        } catch {
+          /* ignore */
+        }
+      }
     };
 
     loadProduct();
-  }, [productId]);
+  }, [productId, isAuthenticated]);
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -185,6 +197,30 @@ export default function ProductDetailPage() {
 
     setIsAdded(true);
     setTimeout(() => setIsAdded(false), 2000);
+  };
+
+  const handleToggleFavorite = async () => {
+    if (!product) return;
+
+    if (!isAuthenticated()) {
+      router.push("/auth/login");
+      return;
+    }
+
+    setFavoriteLoading(true);
+    try {
+      if (isFavorited) {
+        await api.removeFavorite(product.id);
+        setIsFavorited(false);
+      } else {
+        await api.addFavorite(product.id);
+        setIsFavorited(true);
+      }
+    } catch (error) {
+      console.error("Favori işlemi başarısız:", error);
+    } finally {
+      setFavoriteLoading(false);
+    }
   };
 
   const handleSubmitReview = async () => {
@@ -212,7 +248,7 @@ export default function ProductDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background pt-24 pb-16">
+      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-background pb-16">
         <div className="flex flex-col items-center gap-3">
           <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
           <p className="text-sm text-text-muted">Ürün yükleniyor...</p>
@@ -223,7 +259,7 @@ export default function ProductDetailPage() {
 
   if (!product) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background pt-24 pb-16">
+      <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center gap-4 bg-background pb-16">
         <span className="text-5xl">🔍</span>
         <p className="text-text-muted">Ürün bulunamadı.</p>
         <Link
@@ -239,8 +275,8 @@ export default function ProductDetailPage() {
   const totalPrice = product.price * quantity;
 
   return (
-    <div className="min-h-screen bg-background pb-20 pt-24">
-      <div className="mx-auto max-w-6xl px-4 pb-6">
+    <div className="min-h-screen bg-background pb-20 pt-12">
+      <div className="mx-auto max-w-6xl px-4 pb-4">
         <nav className="flex items-center gap-2 text-sm text-text-muted">
           <Link href="/" className="transition-colors hover:text-primary">
             Ana Sayfa
@@ -283,8 +319,8 @@ export default function ProductDetailPage() {
               )}
             </div>
 
-            <div className="flex flex-col justify-center p-8 lg:p-12">
-              <div className="mb-4 flex flex-wrap items-center gap-2">
+            <div className="flex flex-col justify-center gap-8 p-8 lg:p-12">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-primary">
                   {product.category || "Genel Kategori"}
                 </span>
@@ -296,12 +332,12 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              <h1 className="mb-4 text-4xl font-extrabold leading-tight tracking-tight text-text-main lg:text-5xl">
+              <h1 className="text-4xl font-extrabold leading-snug tracking-tight text-text-main lg:text-5xl">
                 {product.title}
               </h1>
 
-              <div className="mb-6 inline-flex flex-col rounded-2xl bg-gradient-to-r from-primary/10 to-amber-100/60 p-5 ring-1 ring-primary/20">
-                <span className="mb-1 text-xs font-semibold uppercase tracking-wider text-primary">
+              <div>
+                <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-text-muted">
                   Satış Fiyatı
                 </span>
                 <div className="flex items-baseline gap-2">
@@ -311,14 +347,14 @@ export default function ProductDetailPage() {
                   <span className="text-sm text-text-muted">/ adet</span>
                 </div>
                 {quantity > 1 && (
-                  <p className="mt-2 text-sm font-medium text-primary">
+                  <p className="mt-3 text-sm font-medium text-primary">
                     {quantity} adet = ₺{totalPrice.toFixed(2)}
                   </p>
                 )}
               </div>
 
-              <div className="mb-6">
-                <p className="mb-2 text-sm font-semibold text-text-main">
+              <div>
+                <p className="mb-3 text-sm font-semibold text-text-main">
                   Miktar
                 </p>
                 <div className="inline-flex items-center overflow-hidden rounded-xl ring-1 ring-border">
@@ -340,27 +376,63 @@ export default function ProductDetailPage() {
                 </div>
               </div>
 
-              <Button
-                variant="primary"
-                size="lg"
-                className="h-14 w-full text-lg font-bold shadow-lg shadow-primary/25"
-                onClick={handleAddToCart}
-                disabled={!product.is_active}
-              >
-                {isAdded
-                  ? "Sepete Eklendi! ✓"
-                  : product.is_active
-                    ? "Sepete Ekle"
-                    : "Stokta Yok"}
-              </Button>
+              <div className="space-y-4">
+                <div className="flex gap-3">
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="h-14 flex-1 text-lg font-bold shadow-lg shadow-primary/25"
+                    onClick={handleAddToCart}
+                    disabled={!product.is_active}
+                  >
+                    {isAdded
+                      ? "Sepete Eklendi! ✓"
+                      : product.is_active
+                        ? "Sepete Ekle"
+                        : "Stokta Yok"}
+                  </Button>
+                  <button
+                    onClick={handleToggleFavorite}
+                    disabled={favoriteLoading}
+                    title={isFavorited ? "Favorilerden çıkar" : "Favorilere ekle"}
+                    className={`flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-lg border transition-all active:scale-[0.98] disabled:opacity-50 ${
+                      isFavorited
+                        ? "border-red-200 bg-red-50 text-red-500 hover:bg-red-100"
+                        : "border-border bg-surface text-text-muted hover:border-red-200 hover:bg-red-50 hover:text-red-500"
+                    }`}
+                  >
+                    <svg
+                      className="h-6 w-6"
+                      fill={isFavorited ? "currentColor" : "none"}
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={isFavorited ? 0 : 2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                {!isAuthenticated() && (
+                  <p className="text-center text-xs text-text-muted">
+                    Favorilere eklemek için{" "}
+                    <Link href="/auth/login" className="font-medium text-primary hover:underline">
+                      giriş yap
+                    </Link>
+                  </p>
+                )}
 
-              <p className="mt-4 text-center text-xs text-text-muted">
-                Satıcı:{" "}
-                <span className="font-semibold text-text-main">
-                  Printago Partner
-                </span>{" "}
-                · Türkiye
-              </p>
+                <p className="text-center text-xs text-text-muted">
+                  Satıcı:{" "}
+                  <span className="font-semibold text-text-main">
+                    Printago Partner
+                  </span>{" "}
+                  · Türkiye
+                </p>
+              </div>
             </div>
           </div>
         </div>
