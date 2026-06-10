@@ -297,13 +297,13 @@ export default function ProductDetailPage() {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(true)}
-                  className="relative z-10 w-full aspect-[3/4] max-w-md overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-border/50 transition-all hover:shadow-md cursor-zoom-in"
+                  className="relative z-10 w-full max-w-md cursor-zoom-in group"
                   title="Resmi Büyüt"
                 >
                   <img
                     src={product.image_url}
                     alt={product.title}
-                    className="h-full w-full object-contain transition-transform duration-300 hover:scale-105"
+                    className="w-full h-auto object-contain transition-transform duration-300 group-hover:scale-105 rounded-xl drop-shadow-lg"
                   />
                 </button>
               ) : (
