@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Button from "@/components/common/Button";
 import { useAuthStore } from "@/store/useAuthStore";
+import api from "@/services/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,31 +23,17 @@ export default function LoginPage() {
 
     try {
       // Login request
-      const res = await fetch("http://localhost:8000/api/v1/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      const loginData = await api.login(email, password) as any;
+      const access_token = loginData.access_token;
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.detail || "Giriş başarısız");
-      }
-
-      const { access_token } = await res.json();
+      // Save token temporarily so getAuthHeaders can use it if we needed to, 
+      // but wait, we need to save it to Zustand store first so ApiClient can use it for getCurrentUser!
+      setAuth(access_token, { id: 0, email: "", role: "customer" }); // temporary save to allow next request
 
       // Get user profile
-      const userRes = await fetch("http://localhost:8000/api/v1/auth/me", {
-        headers: { Authorization: `Bearer ${access_token}` },
-      });
-
-      if (!userRes.ok) {
-        throw new Error("Kullanıcı bilgileri alınamadı");
-      }
-
-      const userData = await userRes.json();
+      const userData = await api.getCurrentUser() as any;
       
-      // Save to store
+      // Save full data to store
       setAuth(access_token, userData);
 
       // Redirect

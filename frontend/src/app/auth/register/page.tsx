@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Button from "@/components/common/Button";
+import api from "@/services/api";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -20,16 +21,7 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      const res = await fetch("http://localhost:8000/api/v1/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, role }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.detail || "Kayıt başarısız");
-      }
+      await api.register(email, password, role);
 
       // Automatically redirect to login after successful registration
       router.push("/auth/login");
