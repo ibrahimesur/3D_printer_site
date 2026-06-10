@@ -90,6 +90,19 @@ def get_products(db: Session = Depends(get_db)):
     products = db.query(Product).filter(Product.is_active == True).all()
     return products
 
+@router.get("/products/{id}/similar", response_model=List[ProductResponse])
+def get_similar_products(id: int, db: Session = Depends(get_db)):
+    """Aynı kategorideki diğer aktif ürünleri döner."""
+    product = db.query(Product).filter(Product.id == id, Product.is_active == True).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Ürün bulunamadı")
+
+    query = db.query(Product).filter(Product.is_active == True, Product.id != id)
+    if product.category:
+        query = query.filter(Product.category == product.category)
+
+    return query.order_by(Product.created_at.desc()).limit(4).all()
+
 @router.get("/products/{id}", response_model=ProductResponse)
 def get_product(id: int, db: Session = Depends(get_db)):
     """Müşteriler için tek bir ürünün detayını getirir."""

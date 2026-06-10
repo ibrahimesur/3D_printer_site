@@ -178,6 +178,24 @@ class ApiClient {
       method: "DELETE",
     });
   }
+
+  async getSimilarProducts(id: number) {
+    return this.request(`/products/${id}/similar`);
+  }
+
+  async getProductReviews(productId: number) {
+    return this.request(`/products/${productId}/reviews`);
+  }
+
+  async createProductReview(
+    productId: number,
+    data: { rating: number; comment?: string }
+  ) {
+    return this.request(`/products/${productId}/reviews`, {
+      method: "POST",
+      body: data,
+    });
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);
