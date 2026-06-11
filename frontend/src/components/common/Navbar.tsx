@@ -31,10 +31,47 @@ export default function Navbar() {
     return unsubscribe;
   }, []);
 
+  // Restrict producer navigation
+  useEffect(() => {
+    if (isMounted && isAuthenticated() && user?.role === "producer") {
+      if (
+        pathname !== "/dashboard" && 
+        !pathname.startsWith("/designs") && 
+        !pathname.startsWith("/auth") &&
+        !pathname.startsWith("/admin") // Admin checking just in case
+      ) {
+        router.push("/dashboard");
+      }
+    }
+  }, [isMounted, isAuthenticated, user, pathname, router]);
+
   const handleLogout = () => {
     logout();
     router.push("/");
   };
+
+  if (isMounted && isAuthenticated() && user?.role === "producer") {
+    return (
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 gap-4">
+            {/* Logo with Link to Dashboard */}
+            <Link href="/dashboard" className="flex items-center gap-3 flex-shrink-0 group">
+              <img src="/printago.svg" alt="PrintAgo Logo" className="h-12 w-12 object-contain transform group-hover:rotate-6 transition-transform duration-300" />
+              <span className="hidden sm:block text-3xl font-black tracking-tighter text-orange-500 lowercase group-hover:text-orange-600 transition-colors">printago</span>
+            </Link>
+
+            {/* Actions */}
+            <div>
+              <button onClick={handleLogout} className="text-sm font-medium text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg transition-colors border border-red-100">
+                Çıkış Yap
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+    );
+  }
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm border-b border-gray-200">
