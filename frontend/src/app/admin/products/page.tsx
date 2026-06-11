@@ -21,6 +21,7 @@ interface Product {
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [categoryFilter, setCategoryFilter] = useState<string>("Tümü");
   
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -177,6 +178,20 @@ export default function AdminProductsPage() {
     }
   };
 
+  const CATEGORIES = [
+    "Figür & Karakter",
+    "Dekoratif Ürünler",
+    "Yedek Parça",
+    "Maket & Hobi",
+    "Aksesuar",
+    "Filamentler",
+    "Dünya Kupası 2026"
+  ];
+
+  const filteredProducts = categoryFilter === "Tümü" 
+    ? products 
+    : products.filter(p => p.category === categoryFilter);
+
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -185,15 +200,27 @@ export default function AdminProductsPage() {
             <h1 className="text-3xl font-bold text-gray-900">Ürün Yönetimi</h1>
             <p className="text-sm text-gray-500 mt-1">Sistemdeki tüm ürünleri ekleyin, güncelleyin veya kaldırın.</p>
           </div>
-          <button
-            onClick={() => openModal()}
-            className="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
-            </svg>
-            Yeni Ürün Ekle
-          </button>
+          <div className="flex items-center gap-4">
+            <select 
+              value={categoryFilter} 
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="bg-white border border-gray-300 text-gray-700 px-4 py-2.5 rounded-lg font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+            >
+              <option value="Tümü">Tüm Kategoriler</option>
+              {CATEGORIES.map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+            <button
+              onClick={() => openModal()}
+              className="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
+              </svg>
+              Yeni Ürün Ekle
+            </button>
+          </div>
         </div>
 
         {/* Product Table */}
@@ -214,12 +241,12 @@ export default function AdminProductsPage() {
                   <tr>
                     <td colSpan={5} className="px-6 py-12 text-center text-gray-500">Yükleniyor...</td>
                   </tr>
-                ) : products.length === 0 ? (
+                ) : filteredProducts.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500">Henüz ürün eklenmemiş.</td>
+                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500">Bu kategoriye ait ürün bulunmuyor.</td>
                   </tr>
                 ) : (
-                  products.map((product) => (
+                  filteredProducts.map((product) => (
                     <tr key={product.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
@@ -298,8 +325,13 @@ export default function AdminProductsPage() {
                         <input type="number" step="0.01" name="price" required min="0" value={formData.price} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500" />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
-                        <input type="text" name="category" value={formData.category} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500" />
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Kategori *</label>
+                        <select name="category" required value={formData.category} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 bg-white">
+                          <option value="">Seçiniz...</option>
+                          {CATEGORIES.map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))}
+                        </select>
                       </div>
                     </div>
 
