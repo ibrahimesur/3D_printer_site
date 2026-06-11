@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import api from "@/services/api";
+import { useCartStore } from "@/store/useCartStore";
 
 interface Product {
   id: number;
@@ -27,6 +28,35 @@ const categories = [
 export default function HomePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const addItem = useCartStore((state) => state.addItem);
+  const [addedItemIds, setAddedItemIds] = useState<Set<number>>(new Set());
+
+  const handleAddToCart = (e: React.MouseEvent, product: Product) => {
+    e.preventDefault(); // Prevent navigating to the product detail page
+    addItem({
+      id: product.id,
+      name: product.title,
+      price: product.price,
+      image: product.image_url || '',
+      quantity: 1,
+      filament: product.filament_type || 'Standart',
+    });
+    
+    // Show temporary feedback
+    setAddedItemIds(prev => {
+      const newSet = new Set(prev);
+      newSet.add(product.id);
+      return newSet;
+    });
+    
+    setTimeout(() => {
+      setAddedItemIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(product.id);
+        return newSet;
+      });
+    }, 2000);
+  };
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -101,10 +131,29 @@ export default function HomePage() {
                         </div>
                       </div>
                       
-                      <div className="mt-2">
+                      <div className="mt-2 flex items-center justify-between">
                         <span className="text-base font-bold text-orange-500">
                           {product.price.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}
                         </span>
+                        <button 
+                          onClick={(e) => handleAddToCart(e, product)}
+                          className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                            addedItemIds.has(product.id) 
+                              ? 'bg-green-500 text-white' 
+                              : 'bg-orange-50 text-orange-500 hover:bg-orange-500 hover:text-white'
+                          }`}
+                          title="Sepete Ekle"
+                        >
+                          {addedItemIds.has(product.id) ? (
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                          ) : (
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                          )}
+                        </button>
                       </div>
                     </div>
                   </Link>
