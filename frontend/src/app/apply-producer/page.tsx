@@ -88,15 +88,15 @@ export default function ApplyProducerPage() {
           
           <div className="space-y-6 text-gray-600">
             <p>
-              PrintAgo, 3D baskı dünyasını herkes için erişilebilir kılan bir pazaryeridir. Türkiye'nin dört bir yanındaki müşterilere ulaşmak için yetenekli üreticiler arıyoruz.
+              PrintAgo, 3D baskı teknolojisini herkes için erişilebilir kılan Türkiye'nin öncü pazaryeridir. Büyük bir müşteri ağına ulaşıyoruz ve bizimle birlikte büyüyecek yetenekli 3D yazıcı üreticilerini arıyoruz.
             </p>
             <div className="flex gap-4">
               <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0 text-orange-500 shadow-sm">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">Ek Gelir Elde Edin</h3>
-                <p className="text-sm">Boşta duran yazıcılarınızı çalıştırın, oturduğunuz yerden sipariş alın ve para kazanın.</p>
+                <h3 className="font-semibold text-gray-900">Yazıcılarınızı Kazanca Dönüştürün</h3>
+                <p className="text-sm">Boşta duran 3D yazıcılarınızı üretime dahil edin; oturduğunuz yerden siparişleri kabul ederek ek gelir sağlamaya başlayın.</p>
               </div>
             </div>
             <div className="flex gap-4">
@@ -104,8 +104,8 @@ export default function ApplyProducerPage() {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">Geniş Müşteri Ağı</h3>
-                <p className="text-sm">Pazarlama ile uğraşmadan, doğrudan baskı ihtiyacı olan binlerce kişiye ürünlerinizi sunun.</p>
+                <h3 className="font-semibold text-gray-900">Hazır Müşteri ve Sipariş Ağı</h3>
+                <p className="text-sm">Pazarlama, reklam veya müşteri bulma süreçleriyle vakit kaybetmeyin. PrintAgo ile doğrudan baskı ihtiyacı olan binlerce müşteriye anında ulaşın.</p>
               </div>
             </div>
             <div className="flex gap-4">
@@ -113,8 +113,8 @@ export default function ApplyProducerPage() {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">Güvenli Ödeme</h3>
-                <p className="text-sm">Tüm ödemeler PrintAgo güvencesindedir, ödemenizi haftalık olarak banka hesabınıza alırsınız.</p>
+                <h3 className="font-semibold text-gray-900">Zamanında ve Güvenli Ödeme</h3>
+                <p className="text-sm">Tüm sipariş ve tahsilat süreçleri PrintAgo güvencesi altındadır. Tamamladığınız üretimlerin ödemelerini her hafta düzenli olarak banka hesabınızdan çekin.</p>
               </div>
             </div>
           </div>

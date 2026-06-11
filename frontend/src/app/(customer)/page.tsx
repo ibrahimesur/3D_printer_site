@@ -1,12 +1,26 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import api from "@/services/api";
 import ProductCard, { Product } from "@/components/common/ProductCard";
 
 export default function HomePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sort, setSort] = useState<string>("recommended");
+
+  const sortedProducts = useMemo(() => {
+    switch (sort) {
+      case "price-asc":
+        return [...products].sort((a, b) => a.price - b.price);
+      case "price-desc":
+        return [...products].sort((a, b) => b.price - a.price);
+      case "best-sellers":
+        return [...products].sort((a, b) => b.id - a.id);
+      default:
+        return products;
+    }
+  }, [products, sort]);
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -35,11 +49,15 @@ export default function HomePage() {
               <p className="text-xs text-gray-500 hidden sm:block">
                 {loading ? "Yükleniyor..." : `${products.length} ürün listeleniyor`}
               </p>
-              <select className="border border-gray-300 rounded-md py-1.5 px-3 text-[13px] bg-white text-gray-700 outline-none focus:border-orange-500">
-                <option>Önerilen</option>
-                <option>En Düşük Fiyat</option>
-                <option>En Yüksek Fiyat</option>
-                <option>En Çok Satanlar</option>
+              <select 
+                value={sort}
+                onChange={(e) => setSort(e.target.value)}
+                className="border border-gray-300 rounded-md py-1.5 px-3 text-[13px] bg-white text-gray-700 outline-none focus:border-orange-500"
+              >
+                <option value="recommended">Önerilen</option>
+                <option value="price-asc">En Düşük Fiyat</option>
+                <option value="price-desc">En Yüksek Fiyat</option>
+                <option value="best-sellers">En Çok Satanlar</option>
               </select>
             </div>
           </div>
@@ -54,7 +72,7 @@ export default function HomePage() {
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {products.map((product) => (
+                {sortedProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>
