@@ -7,6 +7,7 @@ import Button from "@/components/common/Button";
 import { useCartStore } from "@/store/useCartStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import api from "@/services/api";
+import { getPrimaryProductImage, getProductImages } from "@/lib/productImages";
 
 interface Product {
   id: number;
@@ -16,6 +17,7 @@ interface Product {
   category: string | null;
   filament_type: string | null;
   image_url: string | null;
+  image_urls?: string[];
   is_active: boolean;
 }
 
@@ -76,15 +78,17 @@ function StarRating({
 }
 
 function ProductCard({ product }: { product: Product }) {
+  const primaryImage = getPrimaryProductImage(product);
+
   return (
     <Link
       href={`/product/${product.id}`}
       className="group flex flex-col overflow-hidden rounded-xl border border-border bg-surface transition-shadow hover:shadow-md"
     >
       <div className="flex aspect-square w-full items-center justify-center overflow-hidden bg-white">
-        {product.image_url ? (
+        {primaryImage ? (
             <img
-              src={product.image_url}
+              src={primaryImage}
               alt={product.title}
               className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
             />
@@ -133,6 +137,8 @@ export default function ProductDetailPage() {
   const [isFavorited, setIsFavorited] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [modalImageIndex, setModalImageIndex] = useState(0);
 
   const loadReviews = async (id: number) => {
     try {
@@ -184,6 +190,11 @@ export default function ProductDetailPage() {
     loadProduct();
   }, [productId, isAuthenticated]);
 
+  useEffect(() => {
+    setSelectedImageIndex(0);
+    setModalImageIndex(0);
+  }, [product?.id]);
+
   const handleAddToCart = () => {
     if (!product) return;
 
@@ -191,7 +202,7 @@ export default function ProductDetailPage() {
       id: product.id,
       name: product.title,
       price: product.price,
-      image: product.image_url || "🏆",
+      image: getPrimaryProductImage(product) || "🏆",
       quantity: quantity,
       filament: product.filament_type || "Bilinmiyor",
     });
@@ -274,6 +285,8 @@ export default function ProductDetailPage() {
   }
 
   const totalPrice = product.price * quantity;
+  const images = getProductImages(product);
+  const selectedImage = images[selectedImageIndex];
 
   return (
     <div className="min-h-screen bg-background pb-20 pt-12">
@@ -291,21 +304,45 @@ export default function ProductDetailPage() {
         {/* Hero */}
         <div className="overflow-hidden rounded-3xl border border-border bg-surface shadow-sm">
           <div className="grid lg:grid-cols-2">
-            <div className="relative flex min-h-[420px] items-center justify-center bg-surface p-6 lg:min-h-[520px]">
+            <div className="relative flex min-h-[420px] flex-col items-center justify-center bg-surface p-6 lg:min-h-[520px]">
+              {selectedImage ? (
+                <div className="relative z-10 flex w-full max-w-md flex-col items-center gap-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setModalImageIndex(selectedImageIndex);
+                      setIsModalOpen(true);
+                    }}
+                    className="relative w-full cursor-zoom-in group"
+                    title="Resmi Büyüt"
+                  >
+                    <img
+                      src={selectedImage}
+                      alt={`${product.title} - ${selectedImageIndex + 1}`}
+                      className="h-auto w-full rounded-xl object-contain drop-shadow-lg transition-transform duration-300 group-hover:scale-105"
+                    />
+                  </button>
 
-              {product.image_url ? (
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(true)}
-                  className="relative z-10 w-full max-w-md cursor-zoom-in group"
-                  title="Resmi Büyüt"
-                >
-                  <img
-                    src={product.image_url}
-                    alt={product.title}
-                    className="w-full h-auto object-contain transition-transform duration-300 group-hover:scale-105 rounded-xl drop-shadow-lg"
-                  />
-                </button>
+                  {images.length > 1 && (
+                    <div className="flex w-full flex-wrap justify-center gap-2">
+                      {images.map((url, index) => (
+                        <button
+                          key={`${url}-${index}`}
+                          type="button"
+                          onClick={() => setSelectedImageIndex(index)}
+                          className={`h-16 w-16 overflow-hidden rounded-lg border-2 bg-white transition-all ${
+                            index === selectedImageIndex
+                              ? "border-primary ring-2 ring-primary/20"
+                              : "border-border hover:border-primary/50"
+                          }`}
+                          title={`Görsel ${index + 1}`}
+                        >
+                          <img src={url} alt="" className="h-full w-full object-contain" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ) : (
                 <div className="relative z-10 flex flex-col items-center gap-4 text-center">
                   <div className="flex h-48 w-48 items-center justify-center rounded-full bg-white/70 shadow-xl ring-1 ring-amber-200/60 backdrop-blur-sm">
@@ -650,12 +687,12 @@ export default function ProductDetailPage() {
       </div>
 
       {/* Resim Büyütme Modalı */}
-      {isModalOpen && product?.image_url && (
-        <div 
+      {isModalOpen && images.length > 0 && (
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm transition-opacity"
           onClick={() => setIsModalOpen(false)}
         >
-          <button 
+          <button
             className="absolute right-4 top-4 md:right-8 md:top-8 rounded-full bg-white/10 p-3 text-white transition-colors hover:bg-white/30"
             onClick={() => setIsModalOpen(false)}
             title="Kapat"
@@ -664,12 +701,50 @@ export default function ProductDetailPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
+
+          {images.length > 1 && (
+            <>
+              <button
+                type="button"
+                className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white transition-colors hover:bg-white/30"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setModalImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+                }}
+                title="Önceki görsel"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white transition-colors hover:bg-white/30 md:right-20"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setModalImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+                }}
+                title="Sonraki görsel"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </>
+          )}
+
           <img
-            src={product.image_url}
+            src={images[modalImageIndex]}
             alt={product.title}
-            className="max-h-[90vh] max-w-[90vw] object-contain rounded-xl shadow-2xl"
+            className="max-h-[90vh] max-w-[90vw] rounded-xl object-contain shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           />
+
+          {images.length > 1 && (
+            <p className="absolute bottom-6 text-sm font-medium text-white/80">
+              {modalImageIndex + 1} / {images.length}
+            </p>
+          )}
         </div>
       )}
     </div>

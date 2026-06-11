@@ -3,9 +3,16 @@
 import { useState, useEffect } from "react";
 import api from "@/services/api";
 import { supabase } from "@/utils/supabase";
-import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop';
+import ReactCrop, {
+  type Crop,
+  type PixelCrop,
+  centerCrop,
+  makeAspectCrop,
+  convertToPixelCrop,
+} from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import getCroppedImg from '@/utils/cropImage';
+import { getPrimaryProductImage, getProductImages } from '@/lib/productImages';
 
 interface Product {
   id: number;
@@ -15,6 +22,17 @@ interface Product {
   category: string | null;
   filament_type: string | null;
   image_url: string | null;
+  image_urls?: string[];
+  is_active: boolean;
+}
+
+interface ProductFormData {
+  title: string;
+  description: string;
+  price: number | "";
+  category: string;
+  filament_type: string;
+  image_urls: string[];
   is_active: boolean;
 }
 
@@ -28,13 +46,13 @@ export default function AdminProductsPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   
   // Form state
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ProductFormData>({
     title: "",
     description: "",
-    price: 0,
+    price: "",
     category: "",
     filament_type: "",
-    image_url: "",
+    image_urls: [],
     is_active: true,
   });
   const [saving, setSaving] = useState(false);
@@ -51,12 +69,26 @@ export default function AdminProductsPage() {
   const onFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
+      setCompletedCrop(null);
+      setCrop({ unit: '%', width: 90, height: 90, x: 5, y: 5 });
       const reader = new FileReader();
       reader.addEventListener('load', () => setImageToCrop(reader.result as string));
       reader.readAsDataURL(file);
       setCropModalOpen(true);
       if (e.target) e.target.value = '';
     }
+  };
+
+  const onCropImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const { width, height } = e.currentTarget;
+    const percentCrop = centerCrop(
+      makeAspectCrop({ unit: '%', width: 90 }, 3 / 4, width, height),
+      width,
+      height
+    );
+    setCrop(percentCrop);
+    setCompletedCrop(convertToPixelCrop(percentCrop, width, height));
+    setImageRef(e.currentTarget);
   };
 
   const handleCropConfirm = async () => {
@@ -79,7 +111,10 @@ export default function AdminProductsPage() {
 
       const { data } = supabase.storage.from('product-images').getPublicUrl(fileName);
       
-      setFormData(prev => ({ ...prev, image_url: data.publicUrl }));
+      setFormData((prev) => ({
+        ...prev,
+        image_urls: [...prev.image_urls, data.publicUrl],
+      }));
       setImageToCrop(null);
     } catch (error: any) {
       alert("Resim yüklenirken hata: " + error.message);
@@ -116,10 +151,10 @@ export default function AdminProductsPage() {
       setFormData({
         title: product.title,
         description: product.description || "",
-        price: product.price,
+        price: Number(product.price),
         category: product.category || "",
         filament_type: product.filament_type || "",
-        image_url: product.image_url || "",
+        image_urls: getProductImages(product),
         is_active: product.is_active,
       });
     } else {
@@ -127,10 +162,10 @@ export default function AdminProductsPage() {
       setFormData({
         title: "",
         description: "",
-        price: 0,
+        price: "",
         category: "",
         filament_type: "",
-        image_url: "",
+        image_urls: [],
         is_active: true,
       });
     }
@@ -142,23 +177,74 @@ export default function AdminProductsPage() {
     setEditingProduct(null);
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
+  const removeImage = (index: number) => {
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : type === "number" ? parseFloat(value) : value,
+      image_urls: prev.image_urls.filter((_, i) => i !== index),
     }));
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+
+    if (type === "checkbox") {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: (e.target as HTMLInputElement).checked,
+      }));
+      return;
+    }
+
+    if (type === "number") {
+      if (value === "") {
+        setFormData((prev) => ({ ...prev, [name]: "" }));
+        return;
+      }
+      const parsed = parseFloat(value);
+      if (!Number.isNaN(parsed)) {
+        setFormData((prev) => ({ ...prev, [name]: parsed }));
+      }
+      return;
+    }
+
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const price = typeof formData.price === "number" ? formData.price : parseFloat(String(formData.price));
+    if (Number.isNaN(price) || price < 0) {
+      alert("Geçerli bir fiyat girin.");
+      return;
+    }
+
+    const payload = {
+      title: formData.title,
+      description: formData.description,
+      price,
+      category: formData.category,
+      filament_type: formData.filament_type,
+      is_active: formData.is_active,
+      image_urls: [...formData.image_urls],
+      image_url: formData.image_urls[0] || null,
+    };
+
     try {
       setSaving(true);
+      let saved: Product;
       if (editingProduct) {
-        await api.updateProduct(editingProduct.id, formData);
+        saved = (await api.updateProduct(editingProduct.id, payload)) as Product;
       } else {
-        await api.createProduct(formData);
+        saved = (await api.createProduct(payload)) as Product;
       }
+
+      const savedCount = getProductImages(saved).length;
+      if (savedCount !== payload.image_urls.length) {
+        throw new Error(
+          `Görseller kaydedilemedi (${savedCount}/${payload.image_urls.length}). Backend yeniden başlatıldı mı?`
+        );
+      }
+
       closeModal();
       fetchProducts();
     } catch (err: any) {
@@ -251,8 +337,8 @@ export default function AdminProductsPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="h-12 w-12 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden flex justify-center items-center">
-                            {product.image_url ? (
-                              <img className="h-12 w-12 object-cover" src={product.image_url} alt="" />
+                            {getPrimaryProductImage(product) ? (
+                              <img className="h-12 w-12 object-cover" src={getPrimaryProductImage(product)!} alt="" />
                             ) : (
                               <span className="text-gray-400 text-xs">Görsel</span>
                             )}
@@ -301,7 +387,7 @@ export default function AdminProductsPage() {
 
             <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
-            <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+            <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl w-full">
               <form onSubmit={handleSubmit}>
                 <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                   <h3 className="text-lg leading-6 font-bold text-gray-900 mb-6" id="modal-title">
@@ -322,7 +408,16 @@ export default function AdminProductsPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Fiyat (₺) *</label>
-                        <input type="number" step="0.01" name="price" required min="0" value={formData.price} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500" />
+                        <input
+                          type="number"
+                          step="0.01"
+                          name="price"
+                          required
+                          min="0"
+                          value={formData.price === "" ? "" : formData.price}
+                          onChange={handleChange}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                        />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Kategori *</label>
@@ -353,26 +448,61 @@ export default function AdminProductsPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Ürün Görseli</label>
-                      <div className="flex gap-2">
-                        <input type="text" name="image_url" placeholder="Görsel URL (veya yandaki butondan yükle)" value={formData.image_url} onChange={handleChange} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500" />
-                        <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg border border-gray-300 flex items-center justify-center transition-colors relative overflow-hidden">
-                          {uploadingImage ? "Yükleniyor..." : "Dosya Seç"}
-                          <input type="file" accept="image/*" onChange={onFileSelect} disabled={uploadingImage || isCropping} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
-                        </label>
-                      </div>
-                      {formData.image_url && (
-                        <div className="mt-3">
-                          <img src={formData.image_url} alt="Preview" className="h-24 object-contain rounded-md border border-gray-200" />
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Ürün Görselleri
+                        <span className="ml-1 text-xs font-normal text-gray-500">
+                          ({formData.image_urls.length} görsel)
+                        </span>
+                      </label>
+                      <label className="inline-flex cursor-pointer items-center justify-center rounded-lg border border-orange-200 bg-orange-50 px-4 py-2 text-orange-700 transition-colors hover:bg-orange-100 relative overflow-hidden">
+                        {uploadingImage ? "Yükleniyor..." : "Dosya Yükle"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={onFileSelect}
+                          disabled={uploadingImage || isCropping}
+                          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                        />
+                      </label>
+                      {formData.image_urls.length > 0 ? (
+                        <div className="mt-3 grid grid-cols-3 sm:grid-cols-4 gap-3">
+                          {formData.image_urls.map((url, index) => (
+                            <div key={`${url}-${index}`} className="relative group rounded-lg border border-gray-200 overflow-hidden bg-gray-50">
+                              <img src={url} alt={`Görsel ${index + 1}`} className="h-24 w-full object-contain" />
+                              {index === 0 && (
+                                <span className="absolute left-1 top-1 rounded bg-orange-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                                  Kapak
+                                </span>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => removeImage(index)}
+                                className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="Görseli kaldır"
+                              >
+                                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </div>
+                          ))}
                         </div>
+                      ) : (
+                        <p className="mt-2 text-xs text-gray-500">
+                          Birden fazla görsel ekleyebilirsiniz. İlk görsel kapak olarak kullanılır.
+                        </p>
                       )}
                     </div>
                   </div>
                 </div>
                 
                 <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-200">
-                  <button type="submit" disabled={saving} className="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-orange-500 text-base font-medium text-white hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
-                    {saving ? "Kaydediliyor..." : "Kaydet"}
+                  <button
+                    type="submit"
+                    disabled={saving || uploadingImage || isCropping || cropModalOpen}
+                    className="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-orange-500 text-base font-medium text-white hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors disabled:opacity-50"
+                  >
+                    {uploadingImage ? "Görsel yükleniyor..." : saving ? "Kaydediliyor..." : "Kaydet"}
                   </button>
                   <button type="button" onClick={closeModal} className="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
                     İptal
@@ -400,7 +530,7 @@ export default function AdminProductsPage() {
                     onComplete={(c) => setCompletedCrop(c)}
                     aspect={3 / 4}
                   >
-                    <img src={imageToCrop} onLoad={(e) => setImageRef(e.currentTarget)} alt="Crop me" className="max-h-[60vh] w-auto object-contain" />
+                    <img src={imageToCrop} onLoad={onCropImageLoad} alt="Crop me" className="max-h-[60vh] w-auto object-contain" />
                   </ReactCrop>
                 </div>
                 <div className="mt-6 flex justify-end items-center">

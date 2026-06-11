@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Button from "@/components/common/Button";
 import { useAuthStore } from "@/store/useAuthStore";
 import api from "@/services/api";
+import { getPrimaryProductImage } from "@/lib/productImages";
 
 interface Product {
   id: number;
@@ -96,7 +97,10 @@ export default function FavoritesPage() {
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-          {favorites.map((item) => (
+          {favorites.map((item) => {
+            const primaryImage = getPrimaryProductImage(item.product);
+
+            return (
             <div
               key={item.id}
               className="group flex flex-col overflow-hidden rounded-xl border border-border bg-surface"
@@ -106,9 +110,9 @@ export default function FavoritesPage() {
                 className="flex flex-1 flex-col"
               >
                 <div className="flex h-40 items-center justify-center overflow-hidden bg-gray-100">
-                  {item.product.image_url ? (
+                  {primaryImage ? (
                     <img
-                      src={item.product.image_url}
+                      src={primaryImage}
                       alt={item.product.title}
                       className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
@@ -145,7 +149,8 @@ export default function FavoritesPage() {
                 </button>
               </div>
             </div>
-          ))}
+          );
+          })}
         </div>
       )}
     </div>

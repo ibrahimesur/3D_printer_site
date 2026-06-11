@@ -5,10 +5,12 @@ import Link from "next/link";
 import Button from "./Button";
 import { useCartStore } from "@/store/useCartStore";
 import { useAuthStore } from "@/store/useAuthStore";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import { CATEGORIES } from "@/lib/categories";
 
 export default function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -16,7 +18,17 @@ export default function Navbar() {
   const { isAuthenticated, user, logout } = useAuthStore();
 
   useEffect(() => {
-    setIsMounted(true);
+    const finishHydration = () => setIsMounted(true);
+
+    if (useAuthStore.persist.hasHydrated()) {
+      finishHydration();
+      return;
+    }
+
+    const unsubscribe = useAuthStore.persist.onFinishHydration(finishHydration);
+    useAuthStore.persist.rehydrate();
+
+    return unsubscribe;
   }, []);
 
   const handleLogout = () => {
@@ -179,17 +191,23 @@ export default function Navbar() {
                 <Link href="/favorites" className="text-text-muted hover:text-red-500 transition-colors py-2 text-sm font-medium">Favorilerim</Link>
               )}
               <div className="flex gap-3 pt-3 border-t border-border">
-                {isMounted && isAuthenticated() ? (
-                  <>
-                    <Button variant="ghost" size="sm" className="flex-1" onClick={handleLogout}>Çıkış Yap</Button>
-                  </>
+                {!isMounted ? (
+                  <div className="h-9 flex-1" />
+                ) : isAuthenticated() ? (
+                  <Button variant="ghost" size="sm" className="flex-1" onClick={handleLogout}>
+                    Çıkış Yap
+                  </Button>
                 ) : (
                   <>
                     <Link href="/auth/login" className="flex-1">
-                      <Button variant="ghost" size="sm" className="w-full">Giriş Yap</Button>
+                      <Button variant="ghost" size="sm" className="w-full">
+                        Giriş Yap
+                      </Button>
                     </Link>
                     <Link href="/auth/register" className="flex-1">
-                      <Button variant="primary" size="sm" className="w-full">Kayıt Ol</Button>
+                      <Button variant="primary" size="sm" className="w-full">
+                        Kayıt Ol
+                      </Button>
                     </Link>
                   </>
                 )}
@@ -203,14 +221,33 @@ export default function Navbar() {
       <div className="hidden md:block border-t border-gray-100 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-8 h-10 text-[13px] font-medium text-gray-600 overflow-x-auto no-scrollbar">
-            <Link href="/" className="hover:text-orange-500 transition-colors whitespace-nowrap text-orange-500 font-semibold border-b-2 border-orange-500 h-full flex items-center">Tümü</Link>
-            <Link href="/?category=DunyaKupasi2026" className="hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center text-red-600 font-semibold">Dünya Kupası 2026 🏆</Link>
-            <Link href="/?category=Figur" className="hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center">Figür & Karakter</Link>
-            <Link href="/?category=Dekorasyon" className="hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center">Dekoratif Ürünler</Link>
-            <Link href="/?category=YedekParca" className="hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center">Yedek Parça</Link>
-            <Link href="/?category=MaketHobi" className="hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center">Maket & Hobi</Link>
-            <Link href="/?category=Aksesuar" className="hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center">Aksesuar</Link>
-            <Link href="/?category=Filament" className="hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center font-semibold text-gray-800">Filamentler</Link>
+            <Link
+              href="/"
+              className={`hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center ${
+                isMounted && pathname === "/" ? "text-orange-500 font-semibold border-b-2 border-orange-500" : ""
+              }`}
+            >
+              Tümü
+            </Link>
+            {CATEGORIES.map((category) => {
+              const isActive = isMounted && pathname === `/category/${category.slug}`;
+              const isWorldCup = category.slug === "dunya-kupasi-2026";
+              return (
+                <Link
+                  key={category.slug}
+                  href={`/category/${category.slug}`}
+                  className={`hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center ${
+                    isActive
+                      ? "text-orange-500 font-semibold border-b-2 border-orange-500"
+                      : isWorldCup
+                      ? "text-red-600 font-semibold"
+                      : ""
+                  }`}
+                >
+                  {category.label}
+                </Link>
+              );
+            })}
           </div>
         </div>
       </div>

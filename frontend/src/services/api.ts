@@ -39,6 +39,7 @@ class ApiClient {
 
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       method,
+      cache: "no-store",
       headers: {
         "Content-Type": "application/json",
         ...this.getAuthHeaders(),

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, JSON
 from sqlalchemy.sql import func
 from app.db.base import Base
 
@@ -12,7 +12,8 @@ class Product(Base):
     price = Column(Float, nullable=False)
     category = Column(String(50), nullable=True)
     filament_type = Column(String(50), nullable=True)  # PLA, PETG vs.
-    image_url = Column(String(500), nullable=True)
+    image_url = Column(String(500), nullable=True)  # Birincil görsel (geriye uyumluluk)
+    image_urls = Column(JSON, default=list)  # Tüm ürün görselleri
     is_active = Column(Boolean, default=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())

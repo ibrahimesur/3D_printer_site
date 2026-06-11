@@ -3,8 +3,23 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from contextlib import asynccontextmanager
+
 from app.core.config import settings
 from app.api.v1.router import api_router
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Uygulama başlarken eksik şema güncellemelerini uygula."""
+    try:
+        from app.db.migrate import ensure_product_image_urls_column
+
+        ensure_product_image_urls_column()
+    except Exception as exc:
+        print(f"Ürün görsel migrasyonu atlandı: {exc}")
+    yield
+
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -12,6 +27,7 @@ app = FastAPI(
     version="0.1.0",
     docs_url="/docs",
     redoc_url="/redoc",
+    lifespan=lifespan,
 )
 
 # ── CORS Middleware ───────────────────────────────────────────

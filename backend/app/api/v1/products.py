@@ -1,12 +1,62 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from app.api.deps import get_db, get_current_admin_user
 from app.models.product import Product
 
 router = APIRouter(tags=["Products"])
+
+
+def normalize_image_fields(data: dict) -> dict:
+    """image_urls ile image_url alanlarını senkron tutar."""
+    if "image_urls" in data:
+        urls = [url.strip() for url in (data.get("image_urls") or []) if url and str(url).strip()]
+        data["image_urls"] = urls
+        data["image_url"] = urls[0] if urls else None
+    elif "image_url" in data:
+        url = data.get("image_url")
+        if url and str(url).strip():
+            data["image_urls"] = [str(url).strip()]
+            data["image_url"] = str(url).strip()
+        else:
+            data["image_urls"] = []
+            data["image_url"] = None
+    return data
+
+
+def apply_image_fields(product: Product, data: dict) -> None:
+    """JSON image_urls sütununu güvenilir şekilde günceller."""
+    if "image_urls" in data:
+        urls = data["image_urls"]
+        product.image_urls = urls
+        product.image_url = urls[0] if urls else None
+        flag_modified(product, "image_urls")
+    elif "image_url" in data:
+        url = data.get("image_url")
+        product.image_url = url
+        product.image_urls = [url] if url else []
+        flag_modified(product, "image_urls")
+
+
+def product_to_response(product: Product) -> "ProductResponse":
+    urls = list(product.image_urls or [])
+    if not urls and product.image_url:
+        urls = [product.image_url]
+    return ProductResponse(
+        id=product.id,
+        title=product.title,
+        description=product.description,
+        price=product.price,
+        category=product.category,
+        filament_type=product.filament_type,
+        image_url=urls[0] if urls else product.image_url,
+        image_urls=urls,
+        is_active=product.is_active,
+    )
+
 
 # ── Schemas ────────────────────────────────────────────────────────
 class ProductCreate(BaseModel):
@@ -16,7 +66,16 @@ class ProductCreate(BaseModel):
     category: Optional[str] = None
     filament_type: Optional[str] = None
     image_url: Optional[str] = None
+    image_urls: List[str] = []
     is_active: bool = True
+
+    @field_validator("image_urls", mode="before")
+    @classmethod
+    def ensure_image_urls_list(cls, value):
+        if value is None:
+            return []
+        return value
+
 
 class ProductUpdate(BaseModel):
     title: Optional[str] = None
@@ -25,7 +84,9 @@ class ProductUpdate(BaseModel):
     category: Optional[str] = None
     filament_type: Optional[str] = None
     image_url: Optional[str] = None
+    image_urls: Optional[List[str]] = None
     is_active: Optional[bool] = None
+
 
 class ProductResponse(BaseModel):
     id: int
@@ -35,20 +96,28 @@ class ProductResponse(BaseModel):
     category: Optional[str] = None
     filament_type: Optional[str] = None
     image_url: Optional[str] = None
+    image_urls: List[str] = []
     is_active: bool
 
     class Config:
         from_attributes = True
 
+
 # ── Admin Endpoints ────────────────────────────────────────────────
 @router.post("/admin/products", response_model=ProductResponse, status_code=status.HTTP_201_CREATED)
 def create_product(product: ProductCreate, db: Session = Depends(get_db), current_admin = Depends(get_current_admin_user)):
     """Yeni bir ürün oluşturur (Sadece admin)."""
-    db_product = Product(**product.model_dump())
+    product_data = normalize_image_fields(product.model_dump())
+    image_urls = product_data.pop("image_urls", [])
+    image_url = product_data.pop("image_url", None)
+    db_product = Product(**product_data)
+    db_product.image_urls = image_urls
+    db_product.image_url = image_url
     db.add(db_product)
     db.commit()
     db.refresh(db_product)
-    return db_product
+    return product_to_response(db_product)
+
 
 @router.put("/admin/products/{id}", response_model=ProductResponse)
 def update_product(id: int, product: ProductUpdate, db: Session = Depends(get_db), current_admin = Depends(get_current_admin_user)):
@@ -56,14 +125,26 @@ def update_product(id: int, product: ProductUpdate, db: Session = Depends(get_db
     db_product = db.query(Product).filter(Product.id == id).first()
     if not db_product:
         raise HTTPException(status_code=404, detail="Ürün bulunamadı")
-    
+
     update_data = product.model_dump(exclude_unset=True)
+    update_data = normalize_image_fields(update_data)
+
+    image_payload = {
+        k: update_data.pop(k)
+        for k in ("image_urls", "image_url")
+        if k in update_data
+    }
+
     for key, value in update_data.items():
         setattr(db_product, key, value)
-        
+
+    if image_payload:
+        apply_image_fields(db_product, image_payload)
+
     db.commit()
     db.refresh(db_product)
-    return db_product
+    return product_to_response(db_product)
+
 
 @router.delete("/admin/products/{id}")
 def delete_product(id: int, db: Session = Depends(get_db), current_admin = Depends(get_current_admin_user)):
@@ -71,24 +152,26 @@ def delete_product(id: int, db: Session = Depends(get_db), current_admin = Depen
     db_product = db.query(Product).filter(Product.id == id).first()
     if not db_product:
         raise HTTPException(status_code=404, detail="Ürün bulunamadı")
-    
-    # Soft delete
+
     db_product.is_active = False
     db.commit()
     return {"message": "Ürün başarıyla pasife alındı"}
+
 
 @router.get("/admin/products", response_model=List[ProductResponse])
 def get_all_products(db: Session = Depends(get_db), current_admin = Depends(get_current_admin_user)):
     """Admin için tüm ürünleri (pasif olanlar dahil) listeler."""
     products = db.query(Product).all()
-    return products
+    return [product_to_response(product) for product in products]
+
 
 # ── Public Endpoints ───────────────────────────────────────────────
 @router.get("/products", response_model=List[ProductResponse])
 def get_products(db: Session = Depends(get_db)):
     """Müşteriler için aktif ürünleri listeler."""
     products = db.query(Product).filter(Product.is_active == True).all()
-    return products
+    return [product_to_response(product) for product in products]
+
 
 @router.get("/products/{id}/similar", response_model=List[ProductResponse])
 def get_similar_products(id: int, db: Session = Depends(get_db)):
@@ -101,7 +184,8 @@ def get_similar_products(id: int, db: Session = Depends(get_db)):
     if product.category:
         query = query.filter(Product.category == product.category)
 
-    return query.order_by(Product.created_at.desc()).limit(4).all()
+    return [product_to_response(item) for item in query.order_by(Product.created_at.desc()).limit(4).all()]
+
 
 @router.get("/products/{id}", response_model=ProductResponse)
 def get_product(id: int, db: Session = Depends(get_db)):
@@ -109,4 +193,4 @@ def get_product(id: int, db: Session = Depends(get_db)):
     product = db.query(Product).filter(Product.id == id, Product.is_active == True).first()
     if not product:
         raise HTTPException(status_code=404, detail="Ürün bulunamadı")
-    return product
+    return product_to_response(product)
