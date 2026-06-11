@@ -47,30 +47,7 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        {/* Role Toggle */}
-        <div className="flex p-1 space-x-1 bg-background rounded-xl">
-          <button
-            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${
-              role === "customer"
-                ? "bg-surface shadow-sm text-primary border border-border"
-                : "text-text-muted hover:text-text-main"
-            }`}
-            onClick={() => setRole("customer")}
-          >
-            Müşteri
-          </button>
-          <button
-            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${
-              role === "producer"
-                ? "bg-surface shadow-sm text-primary border border-border"
-                : "text-text-muted hover:text-text-main"
-            }`}
-            onClick={() => setRole("producer")}
-          >
-            Üretici
-          </button>
-        </div>
-        
+        {/* Role Toggle Kaldırıldı, artık sadece müşteri kaydı yapılıyor */}
         {error && (
           <div className="bg-red-50 text-red-500 p-3 rounded-lg text-sm text-center">
             {error}
@@ -107,13 +84,23 @@ export default function RegisterPage() {
             <Button
               type="submit"
               variant="primary"
-              className="w-full justify-center py-2.5"
+              className="w-full justify-center py-2.5 shadow-orange-500/20 shadow-lg"
               disabled={isLoading}
             >
               {isLoading ? "Kaydediliyor..." : "Kayıt Ol"}
             </Button>
           </div>
         </form>
+
+        <div className="mt-6 border-t border-border pt-6 text-center">
+          <p className="text-sm text-text-muted mb-2">3D yazıcınız mı var?</p>
+          <Link 
+            href="/apply-producer" 
+            className="inline-flex items-center justify-center px-4 py-2 border border-orange-500 text-orange-500 rounded-lg text-sm font-medium hover:bg-orange-50 transition-colors"
+          >
+            Bizim İçin Üretim Yapmak İster Misiniz?
+          </Link>
+        </div>
       </div>
     </div>
   );

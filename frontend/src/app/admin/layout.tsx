@@ -6,6 +6,7 @@ import ProtectedRoute from "@/components/common/ProtectedRoute";
 
 const navigation = [
   { name: "Genel Bakış", href: "/admin" },
+  { name: "Başvurular", href: "/admin/applications" },
   { name: "Kullanıcılar", href: "/admin/users" },
   { name: "Siparişler", href: "/admin/orders" },
   { name: "Ürünler", href: "/admin/products" },

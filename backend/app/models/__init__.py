@@ -1,8 +1,9 @@
-from app.models.user import User
-from app.models.profile import Profile
-from app.models.order import Order
-from app.models.product import Product
-from app.models.review import Review
-from app.models.favorite import Favorite
+from .user import User, UserRole
+from .profile import Profile
+from .product import Product
+from .order import Order
+from .review import Review
+from .favorite import Favorite
+from .application import ProducerApplication, ApplicationStatus
 
-__all__ = ["User", "Profile", "Order", "Product", "Review", "Favorite"]
+__all__ = ["User", "UserRole", "Profile", "Product", "Order", "Review", "Favorite", "ProducerApplication", "ApplicationStatus"]

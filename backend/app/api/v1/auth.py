@@ -49,14 +49,8 @@ async def register(data: UserRegister, db: Session = Depends(get_db)):
             detail="Bu e-posta adresi ile zaten kayıtlı bir kullanıcı var.",
         )
     
-    # Validate role
-    if data.role not in ["customer", "producer"]:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Geçersiz rol. Sadece 'customer' veya 'producer' olabilir.",
-        )
-    
-    user_role = UserRole.CUSTOMER if data.role == "customer" else UserRole.PRODUCER
+    # Tüm açık kayıtlar sadece Müşteri olarak yapılabilir
+    user_role = UserRole.CUSTOMER
 
     # Create user
     hashed_password = get_password_hash(data.password)
