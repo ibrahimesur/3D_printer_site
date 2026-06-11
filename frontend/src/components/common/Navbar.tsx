@@ -89,15 +89,44 @@ export default function Navbar() {
 
             {isMounted ? (
               isAuthenticated() ? (
-                <div className="flex flex-col items-start justify-center cursor-pointer group">
-                  <div className="flex items-center gap-1">
+                <div className="relative group py-2">
+                  <div className="flex flex-col items-center justify-center cursor-pointer">
                     <svg className="w-5 h-5 text-gray-600 group-hover:text-orange-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                     </svg>
                     <span className="text-[11px] font-medium mt-0.5 text-gray-600 group-hover:text-orange-500 transition-colors">Hesabım</span>
                   </div>
-                  {/* Logout can be a simple link below or we keep the button */}
-                  <button onClick={handleLogout} className="text-[10px] text-gray-400 hover:text-red-500">Çıkış Yap</button>
+
+                  {/* Dropdown Menu */}
+                  <div className="absolute right-0 top-full -mt-1 w-48 bg-white rounded-lg shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <p className="text-xs text-gray-500">Giriş yapıldı</p>
+                      <p className="text-sm font-medium text-gray-800 truncate">{user?.email}</p>
+                    </div>
+                    <div className="py-1 flex flex-col">
+                      <Link href="/orders" className="px-4 py-2.5 text-[13px] text-gray-700 hover:bg-orange-50 hover:text-orange-500 transition-colors">
+                        Siparişlerim
+                      </Link>
+                      <Link href="/favorites" className="px-4 py-2.5 text-[13px] text-gray-700 hover:bg-orange-50 hover:text-orange-500 transition-colors">
+                        Favorilerim
+                      </Link>
+                      {user?.role === "admin" && (
+                        <Link href="/admin" className="px-4 py-2.5 text-[13px] text-gray-700 hover:bg-orange-50 hover:text-orange-500 transition-colors font-medium">
+                          Yönetici Paneli
+                        </Link>
+                      )}
+                      {user?.role === "producer" && (
+                        <Link href="/dashboard" className="px-4 py-2.5 text-[13px] text-gray-700 hover:bg-orange-50 hover:text-orange-500 transition-colors font-medium">
+                          Üretici Paneli
+                        </Link>
+                      )}
+                    </div>
+                    <div className="py-1 border-t border-gray-100">
+                      <button onClick={handleLogout} className="w-full text-left px-4 py-2.5 text-[13px] text-red-600 hover:bg-red-50 transition-colors">
+                        Çıkış Yap
+                      </button>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <>
