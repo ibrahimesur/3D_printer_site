@@ -174,13 +174,12 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-8 h-10 text-[13px] font-medium text-gray-600 overflow-x-auto no-scrollbar">
             <Link href="/" className="hover:text-orange-500 transition-colors whitespace-nowrap text-orange-500 font-semibold border-b-2 border-orange-500 h-full flex items-center">Tümü</Link>
-            <Link href="/?category=Ev" className="hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center">Ev & Yaşam</Link>
-            <Link href="/?category=Teknoloji" className="hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center">Teknoloji</Link>
-            <Link href="/?category=Ofis" className="hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center">Ofis</Link>
-            <Link href="/?category=Dekorasyon" className="hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center">Dekorasyon</Link>
-            <Link href="/?category=Aksesuar" className="hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center">Aksesuar</Link>
-            <Link href="/?category=Oyuncak" className="hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center">Oyuncak</Link>
+            <Link href="/?category=Figur" className="hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center">Figür & Karakter</Link>
+            <Link href="/?category=Dekorasyon" className="hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center">Dekoratif Ürünler</Link>
             <Link href="/?category=YedekParca" className="hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center">Yedek Parça</Link>
+            <Link href="/?category=MaketHobi" className="hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center">Maket & Hobi</Link>
+            <Link href="/?category=Aksesuar" className="hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center">Aksesuar</Link>
+            <Link href="/?category=Filament" className="hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center font-semibold text-gray-800">Filamentler</Link>
           </div>
         </div>
       </div>
