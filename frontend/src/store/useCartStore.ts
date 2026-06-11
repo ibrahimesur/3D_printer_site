@@ -14,8 +14,6 @@ interface CartStore {
   addItem: (item: CartItem) => void;
   removeItem: (id: number, filament: string) => void;
   clearCart: () => void;
-  get totalItems(): number;
-  get totalPrice(): number;
 }
 
 export const useCartStore = create<CartStore>((set, get) => ({
@@ -41,10 +39,4 @@ export const useCartStore = create<CartStore>((set, get) => ({
     }));
   },
   clearCart: () => set({ items: [] }),
-  get totalItems() {
-    return get().items.reduce((total, item) => total + item.quantity, 0);
-  },
-  get totalPrice() {
-    return get().items.reduce((total, item) => total + item.price * item.quantity, 0);
-  },
 }));

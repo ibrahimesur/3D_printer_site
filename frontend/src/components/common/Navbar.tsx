@@ -12,7 +12,7 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
-  const totalItems = useCartStore((state) => state.totalItems);
+  const totalItems = useCartStore((state) => state.items.reduce((sum, item) => sum + item.quantity, 0));
   const { isAuthenticated, user, logout } = useAuthStore();
 
   useEffect(() => {

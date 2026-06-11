@@ -6,7 +6,9 @@ import { useEffect, useState } from "react";
 import Button from "@/components/common/Button";
 
 export default function CartPage() {
-  const { items, removeItem, addItem, clearCart, totalItems, totalPrice } = useCartStore();
+  const { items, removeItem, addItem, clearCart } = useCartStore();
+  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+  const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
