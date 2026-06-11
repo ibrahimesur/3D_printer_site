@@ -45,34 +45,8 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero - Compact */}
-      <section className="bg-surface text-text-main border-b border-border py-16 px-4">
-        <div className="max-w-5xl mx-auto text-center">
-          <h1 className="text-3xl sm:text-4xl font-bold mb-3">
-            3D Baskı Ürünleri Pazaryeri
-          </h1>
-          <p className="text-text-muted text-lg max-w-xl mx-auto">
-            Yüzlerce üreticiden hazır 3D baskı ürünlerini keşfedin ve hemen satın alın.
-          </p>
-
-          {/* Search */}
-          <div className="mt-8 max-w-xl mx-auto">
-            <div className="flex bg-background border border-border rounded-lg overflow-hidden focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all shadow-sm">
-              <input
-                type="text"
-                placeholder="Ürün veya kategori ara..."
-                className="flex-1 px-4 py-3 bg-transparent text-text-main text-sm focus:outline-none placeholder:text-text-muted"
-              />
-              <button className="px-6 bg-primary text-white text-sm font-medium hover:bg-primary-hover transition-colors">
-                Ara
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 py-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
         <div className="flex gap-10">
           {/* Sidebar - Categories */}
           <aside className="hidden lg:block w-48 flex-shrink-0">
@@ -94,8 +68,21 @@ export default function HomePage() {
             </ul>
           </aside>
 
-          {/* Product Grid */}
+          {/* Product Grid Area */}
           <div className="flex-1">
+            {/* Banner */}
+            <div className="mb-8 rounded-2xl overflow-hidden bg-gradient-to-r from-primary to-orange-400 relative h-40 flex items-center shadow-sm">
+               <div className="px-8 relative z-10 text-white">
+                 <h2 className="text-3xl font-bold mb-2">3D Baskı Dünyasını Keşfet</h2>
+                 <p className="text-orange-50 max-w-md">Yüzlerce üreticiden hazır 3D baskı ürünlerini incele ve sipariş ver.</p>
+               </div>
+               <div className="absolute right-0 top-0 bottom-0 opacity-20">
+                  <svg className="h-full w-auto" viewBox="0 0 100 100" preserveAspectRatio="none" fill="currentColor">
+                    <polygon points="50,0 100,0 100,100 0,100" />
+                  </svg>
+               </div>
+            </div>
+
             <div className="flex items-center justify-between mb-6">
               <p className="text-sm text-text-muted">
                 {loading ? "Yükleniyor..." : `${products.length} ürün bulundu`}

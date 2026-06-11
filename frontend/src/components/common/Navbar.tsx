@@ -33,19 +33,20 @@ export default function Navbar() {
             <img src="/printago.svg" alt="PrintAgo Logo" className="h-12 w-auto object-contain" />
           </Link>
 
-          {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-6">
-
-            {isMounted && isAuthenticated() && user?.role === "admin" && (
-              <Link href="/admin" className="text-primary hover:text-primary-dark transition-colors text-sm font-semibold">
-                Yönetici Paneli
-              </Link>
-            )}
-            {isMounted && isAuthenticated() && user?.role === "producer" && (
-              <Link href="/dashboard" className="text-text-muted hover:text-primary transition-colors text-sm font-medium">
-                Üretici Paneline Git
-              </Link>
-            )}
+          {/* Desktop Nav / Search */}
+          <div className="hidden md:flex flex-1 max-w-xl mx-8">
+            <div className="flex w-full bg-background border border-border rounded-lg overflow-hidden focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
+              <input
+                type="text"
+                placeholder="Ürün, kategori veya üretici ara..."
+                className="flex-1 px-4 py-2 bg-transparent text-text-main text-sm focus:outline-none placeholder:text-text-muted"
+              />
+              <button className="px-4 bg-primary text-white hover:bg-primary-hover transition-colors flex items-center justify-center">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           {/* Auth & Cart Buttons */}
@@ -67,7 +68,17 @@ export default function Navbar() {
                 </span>
               )}
             </Link>
-            <div className="w-px h-6 bg-border mx-1"></div>
+            {isMounted && isAuthenticated() && user?.role === "admin" && (
+              <Link href="/admin" className="text-primary hover:text-primary-dark transition-colors text-sm font-semibold mr-2">
+                Yönetici
+              </Link>
+            )}
+            {isMounted && isAuthenticated() && user?.role === "producer" && (
+              <Link href="/dashboard" className="text-text-muted hover:text-primary transition-colors text-sm font-medium mr-2">
+                Üretici Paneli
+              </Link>
+            )}
+            <div className="w-px h-6 bg-border mx-1 hidden lg:block"></div>
 
             {isMounted ? (
               isAuthenticated() ? (
