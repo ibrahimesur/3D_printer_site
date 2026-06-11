@@ -174,6 +174,7 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-8 h-10 text-[13px] font-medium text-gray-600 overflow-x-auto no-scrollbar">
             <Link href="/" className="hover:text-orange-500 transition-colors whitespace-nowrap text-orange-500 font-semibold border-b-2 border-orange-500 h-full flex items-center">Tümü</Link>
+            <Link href="/?category=DunyaKupasi2026" className="hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center text-red-600 font-semibold">Dünya Kupası 2026 🏆</Link>
             <Link href="/?category=Figur" className="hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center">Figür & Karakter</Link>
             <Link href="/?category=Dekorasyon" className="hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center">Dekoratif Ürünler</Link>
             <Link href="/?category=YedekParca" className="hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center">Yedek Parça</Link>
