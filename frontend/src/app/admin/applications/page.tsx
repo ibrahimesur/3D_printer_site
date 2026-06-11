@@ -20,7 +20,7 @@ export default function AdminApplicationsPage() {
   const fetchApplications = async () => {
     try {
       const token = useAuthStore.getState().token;
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/applications`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001"}/api/v1/applications`, {
         headers: {
           "Authorization": `Bearer ${token}`
         }
@@ -44,7 +44,7 @@ export default function AdminApplicationsPage() {
 
     try {
       const token = useAuthStore.getState().token;
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/applications/${id}/${action}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001"}/api/v1/applications/${id}/${action}`, {
         method: "PUT",
         headers: {
           "Authorization": `Bearer ${token}`

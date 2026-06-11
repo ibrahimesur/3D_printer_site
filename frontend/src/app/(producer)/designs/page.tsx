@@ -44,7 +44,7 @@ export default function ProducerDesignsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const file3dInputRef = useRef<HTMLInputElement>(null);
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001";
 
   useEffect(() => {
     fetchDesigns();
