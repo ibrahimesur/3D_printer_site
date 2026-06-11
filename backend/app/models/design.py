@@ -16,7 +16,8 @@ class Design(Base):
     suggested_price = Column(Float, default=0.0)
     royalty_percentage = Column(Float, default=10.0)  # Tasarımcının alacağı yüzde payı
     image_urls = Column(JSON, default=list)  # Görsel URL'leri listesi
-    file_3d_url = Column(String(500), nullable=True)  # STL/3MF dosya yolu
+    file_3d_url = Column(String(500), nullable=True)  # STL/3MF dosya yolu (Eski)
+    file_3d_urls = Column(JSON, default=list)  # Birden fazla STL/3MF dosya yolu
     is_approved = Column(Boolean, default=False)  # Admin onay durumu
     created_at = Column(DateTime, default=datetime.utcnow)
 

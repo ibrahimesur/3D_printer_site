@@ -36,6 +36,7 @@ class DesignResponse(BaseModel):
     royalty_percentage: float
     image_urls: list
     file_3d_url: Optional[str] = None
+    file_3d_urls: list = []
     is_approved: bool
 
     class Config:
@@ -59,7 +60,7 @@ async def create_design(
     description: str = Form(""),
     suggested_price: float = Form(0.0),
     images: List[UploadFile] = File(default=[]),
-    file_3d: Optional[UploadFile] = File(default=None),
+    files_3d: List[UploadFile] = File(default=[]),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -67,7 +68,7 @@ async def create_design(
     _require_producer(current_user)
 
     saved_image_urls = []
-    saved_3d_url = None
+    saved_3d_urls = []
 
     # Save product images
     for img in images:
@@ -83,19 +84,20 @@ async def create_design(
             shutil.copyfileobj(img.file, f)
         saved_image_urls.append(f"/uploads/design_images/{unique_name}")
 
-    # Save 3D file
-    if file_3d and file_3d.filename:
-        ext = os.path.splitext(file_3d.filename)[1].lower()
-        if ext not in ALLOWED_3D_EXTENSIONS:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Geçersiz 3D dosya formatı: {ext}. İzin verilen: {', '.join(ALLOWED_3D_EXTENSIONS)}",
-            )
-        unique_name = f"{uuid.uuid4().hex}{ext}"
-        file_path = os.path.join(FILES_3D_DIR, unique_name)
-        with open(file_path, "wb") as f:
-            shutil.copyfileobj(file_3d.file, f)
-        saved_3d_url = f"/uploads/design_files/{unique_name}"
+    # Save 3D files
+    for f3d in files_3d:
+        if f3d and f3d.filename:
+            ext = os.path.splitext(f3d.filename)[1].lower()
+            if ext not in ALLOWED_3D_EXTENSIONS:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Geçersiz 3D dosya formatı: {ext}. İzin verilen: {', '.join(ALLOWED_3D_EXTENSIONS)}",
+                )
+            unique_name = f"{uuid.uuid4().hex}{ext}"
+            file_path = os.path.join(FILES_3D_DIR, unique_name)
+            with open(file_path, "wb") as f:
+                shutil.copyfileobj(f3d.file, f)
+            saved_3d_urls.append(f"/uploads/design_files/{unique_name}")
 
     new_design = Design(
         creator_id=current_user.id,
@@ -104,7 +106,7 @@ async def create_design(
         suggested_price=suggested_price,
         royalty_percentage=10.0,  # Sitenin standart telif payı
         image_urls=saved_image_urls,
-        file_3d_url=saved_3d_url,
+        file_3d_urls=saved_3d_urls,
         is_approved=False,
     )
     db.add(new_design)

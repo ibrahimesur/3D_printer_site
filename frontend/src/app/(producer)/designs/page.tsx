@@ -14,6 +14,7 @@ interface Design {
   royalty_percentage: number;
   image_urls: string[];
   file_3d_url: string | null;
+  file_3d_urls: string[];
   is_approved: boolean;
 }
 
@@ -36,7 +37,7 @@ export default function ProducerDesignsPage() {
   const [suggestedPrice, setSuggestedPrice] = useState("");
 
   const [imageFiles, setImageFiles] = useState<File[]>([]);
-  const [file3d, setFile3d] = useState<File | null>(null);
+  const [file3dFiles, setFile3dFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
@@ -98,8 +99,10 @@ export default function ProducerDesignsPage() {
         formData.append("images", file);
       });
 
-      if (file3d) {
-        formData.append("file_3d", file3d);
+      if (file3dFiles.length > 0) {
+        file3dFiles.forEach((file) => {
+          formData.append("files_3d", file);
+        });
       }
 
       const response = await fetch(`${API_BASE}/api/v1/producer/designs/`, {
@@ -119,7 +122,7 @@ export default function ProducerDesignsPage() {
       setSuggestedPrice("");
 
       setImageFiles([]);
-      setFile3d(null);
+      setFile3dFiles([]);
       fetchDesigns();
       fetchStats();
 
@@ -148,11 +151,13 @@ export default function ProducerDesignsPage() {
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
-    const dropped = e.dataTransfer.files[0];
-    if (dropped) {
-      const ext = dropped.name.split(".").pop()?.toLowerCase();
-      if (["stl", "3mf", "obj"].includes(ext || "")) {
-        setFile3d(dropped);
+    if (e.dataTransfer.files) {
+      const newFiles = Array.from(e.dataTransfer.files).filter((file) => {
+        const ext = file.name.split(".").pop()?.toLowerCase();
+        return ["stl", "3mf", "obj"].includes(ext || "");
+      });
+      if (newFiles.length > 0) {
+        setFile3dFiles((prev) => [...prev, ...newFiles]);
       } else {
         alert("Lütfen .stl, .3mf veya .obj formatında bir dosya yükleyin.");
       }
@@ -161,6 +166,10 @@ export default function ProducerDesignsPage() {
 
   const removeImage = (index: number) => {
     setImageFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const removeFile3d = (index: number) => {
+    setFile3dFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   return (
@@ -263,15 +272,47 @@ export default function ProducerDesignsPage() {
                   </label>
                   <div
                     onClick={() => fileInputRef.current?.click()}
-                    className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:border-orange-400 hover:bg-orange-50/50 transition-all duration-300 min-h-[140px] flex flex-col items-center justify-center"
+                    className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all duration-300 min-h-[140px] flex flex-col items-center justify-center relative ${
+                      imageFiles.length > 0
+                        ? "border-orange-400 bg-orange-50/10"
+                        : "border-gray-300 hover:border-orange-400 hover:bg-orange-50/50"
+                    }`}
                   >
-                    <svg className="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
                     {imageFiles.length > 0 ? (
-                      <p className="text-sm text-orange-600 font-medium">{imageFiles.length} görsel seçildi</p>
+                      <>
+                        <svg className="w-8 h-8 text-orange-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <p className="text-sm text-orange-600 font-medium">{imageFiles.length} görsel seçildi</p>
+                        <div className="flex flex-wrap gap-2 mt-4 justify-center w-full px-2" onClick={(e) => e.stopPropagation()}>
+                          {imageFiles.map((file, i) => (
+                            <div key={i} className="relative group">
+                              <img
+                                src={URL.createObjectURL(file)}
+                                alt={file.name}
+                                className="w-14 h-14 object-cover rounded-lg border border-gray-200 shadow-sm"
+                              />
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removeImage(i);
+                                }}
+                                className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </>
                     ) : (
-                      <p className="text-sm text-gray-500">Tıklayarak görsel seçin</p>
+                      <>
+                        <svg className="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <p className="text-sm text-gray-500">Tıklayarak görsel seçin</p>
+                      </>
                     )}
                   </div>
                   <input
@@ -281,30 +322,11 @@ export default function ProducerDesignsPage() {
                     accept=".jpg,.jpeg,.png,.webp"
                     className="hidden"
                     onChange={(e) => {
-                      if (e.target.files) setImageFiles(Array.from(e.target.files));
+                      if (e.target.files) {
+                        setImageFiles((prev) => [...prev, ...Array.from(e.target.files!)]);
+                      }
                     }}
                   />
-                  {/* Image preview */}
-                  {imageFiles.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {imageFiles.map((file, i) => (
-                        <div key={i} className="relative group">
-                          <img
-                            src={URL.createObjectURL(file)}
-                            alt={file.name}
-                            className="w-14 h-14 object-cover rounded-lg border border-gray-200"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeImage(i)}
-                            className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
 
                 {/* 3D File Drag & Drop */}
@@ -321,18 +343,40 @@ export default function ProducerDesignsPage() {
                     className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all duration-300 min-h-[140px] flex flex-col items-center justify-center relative overflow-hidden ${
                       isDragging
                         ? "border-orange-500 bg-orange-50 scale-[1.02]"
-                        : file3d
+                        : file3dFiles.length > 0
                         ? "border-green-400 bg-green-50/50"
                         : "border-gray-300 hover:border-orange-400 hover:bg-orange-50/50"
                     }`}
                   >
-                    {file3d ? (
+                    {file3dFiles.length > 0 ? (
                       <>
                         <svg className="w-8 h-8 text-green-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <p className="text-sm text-green-600 font-medium">{file3d.name}</p>
-                        <p className="text-xs text-gray-400 mt-1">{(file3d.size / 1024 / 1024).toFixed(2)} MB</p>
+                        <p className="text-sm text-green-600 font-medium">{file3dFiles.length} dosya seçildi</p>
+                        <div className="flex flex-col gap-1.5 mt-2 max-h-32 overflow-y-auto w-full items-center px-4 relative z-10">
+                          {file3dFiles.map((f, i) => (
+                            <div key={i} className="text-xs text-gray-700 flex items-center justify-between w-full bg-white px-2.5 py-1.5 rounded-lg border border-gray-100 shadow-sm cursor-default">
+                              <div className="flex items-center gap-2 overflow-hidden">
+                                <span className="truncate max-w-[180px] font-medium" title={f.name}>{f.name}</span>
+                                <span className="text-gray-400 whitespace-nowrap">({(f.size / 1024 / 1024).toFixed(2)} MB)</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removeFile3d(i);
+                                }}
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded transition-colors ml-2 flex-shrink-0"
+                                title="Dosyayı Kaldır"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
                       </>
                     ) : (
                       <>
@@ -355,10 +399,13 @@ export default function ProducerDesignsPage() {
                   <input
                     ref={file3dInputRef}
                     type="file"
+                    multiple
                     accept=".stl,.3mf,.obj"
                     className="hidden"
                     onChange={(e) => {
-                      if (e.target.files && e.target.files[0]) setFile3d(e.target.files[0]);
+                      if (e.target.files) {
+                        setFile3dFiles((prev) => [...prev, ...Array.from(e.target.files!)]);
+                      }
                     }}
                   />
                 </div>
@@ -437,12 +484,12 @@ export default function ProducerDesignsPage() {
                       <td className="px-6 py-4 text-gray-500 max-w-xs truncate">{design.description || "—"}</td>
 
                       <td className="px-6 py-4 text-center">
-                        {design.file_3d_url ? (
+                        {(design.file_3d_urls && design.file_3d_urls.length > 0) || design.file_3d_url ? (
                           <span className="inline-flex items-center gap-1 text-green-600 text-xs font-medium">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                             </svg>
-                            Yüklendi
+                            Yüklendi ({design.file_3d_urls ? design.file_3d_urls.length : 1})
                           </span>
                         ) : (
                           <span className="text-gray-400 text-xs">—</span>
