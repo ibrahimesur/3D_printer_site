@@ -16,8 +16,9 @@ try:
     from app.models.review import Review
     from app.models.favorite import Favorite
     from app.models.application import ProducerApplication
+    from app.models.design import Design
     
     Base.metadata.create_all(bind=engine)
-    print("Tüm tablolar (User, Profile, Product, Order, Review, Favorite, ProducerApplication) başarıyla oluşturuldu!")
+    print("Tüm tablolar başarıyla oluşturuldu!")
 except Exception as e:
     print(f"Tablolar oluşturulurken hata: {e}")

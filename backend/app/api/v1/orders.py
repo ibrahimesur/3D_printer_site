@@ -62,9 +62,16 @@ def get_order_pool(db: Session = Depends(get_db)):
     pending_orders = db.query(Order).filter(Order.status == OrderStatus.PENDING).all()
     return pending_orders
 
+from app.api.deps import get_current_user
+from app.models.user import User, UserRole
+from app.models.profile import Profile
+
 @router.post("/{order_id}/claim", response_model=OrderResponse)
-def claim_order(order_id: int, db: Session = Depends(get_db)):
+def claim_order(order_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """Bir üretici işi aldığında çalışır. Siparişi 'printing' (in production) yapar."""
+    if current_user.role != UserRole.PRODUCER:
+        raise HTTPException(status_code=403, detail="Sadece üreticiler iş alabilir")
+
     order = db.query(Order).filter(Order.id == order_id).first()
     
     if not order:
@@ -73,16 +80,44 @@ def claim_order(order_id: int, db: Session = Depends(get_db)):
     if order.status != OrderStatus.PENDING or order.producer_id is not None:
         raise HTTPException(status_code=400, detail="Bu iş başkası tarafından alınmış veya artık uygun değil")
         
-    # Mocking a producer_id since auth is not fully implemented
-    mock_producer_id = 2
-    
     order.status = OrderStatus.PRINTING
-    order.producer_id = mock_producer_id
+    order.producer_id = current_user.id
     
     db.commit()
     db.refresh(order)
     
     return order
+
+@router.get("/producer/active", response_model=List[OrderResponse])
+def get_producer_active_jobs(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """Üreticinin aktif işlerini getirir."""
+    if current_user.role != UserRole.PRODUCER:
+        raise HTTPException(status_code=403, detail="Sadece üreticiler erişebilir")
+        
+    active_orders = db.query(Order).filter(
+        Order.producer_id == current_user.id,
+        Order.status.in_([OrderStatus.PRINTING, OrderStatus.SHIPPED])
+    ).all()
+    return active_orders
+
+@router.get("/producer/stats")
+def get_producer_stats(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """Üretici istatistiklerini getirir (Bakiye, Teslim Edilen İş Sayısı)."""
+    if current_user.role != UserRole.PRODUCER:
+        raise HTTPException(status_code=403, detail="Sadece üreticiler erişebilir")
+        
+    profile = db.query(Profile).filter(Profile.user_id == current_user.id).first()
+    balance = profile.balance if profile else 0.0
+
+    delivered_count = db.query(Order).filter(
+        Order.producer_id == current_user.id,
+        Order.status == OrderStatus.DELIVERED
+    ).count()
+
+    return {
+        "balance": balance,
+        "delivered_count": delivered_count
+    }
 
 # Eklenebilecek eski endpointler
 @router.get("/")

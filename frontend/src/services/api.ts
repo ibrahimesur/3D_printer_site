@@ -92,6 +92,14 @@ class ApiClient {
     });
   }
 
+  async getProducerActiveJobs() {
+    return this.request("/orders/producer/active");
+  }
+
+  async getProducerStats() {
+    return this.request("/orders/producer/stats");
+  }
+
   async createOrder(stlFileUrl: string, notes?: string) {
     return this.request("/orders/", {
       method: "POST",

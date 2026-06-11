@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import Button from "@/components/common/Button";
 import api from "@/services/api";
 
@@ -17,14 +18,12 @@ export default function ProducerDashboard() {
   const [pendingOrders, setPendingOrders] = useState<Order[]>([]);
   const [activeJobs, setActiveJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({ balance: 0, delivered_count: 0 });
 
   useEffect(() => {
-    // Initial static active jobs for UI demonstration
-    setActiveJobs([
-      { id: 104, file: "lamp_shade.stl", progress: 65, eta: "2 saat", filament: "PLA" },
-      { id: 105, file: "figurine_v3.stl", progress: 30, eta: "4 saat", filament: "PETG" },
-    ]);
     fetchPool();
+    fetchActiveJobs();
+    fetchStats();
   }, []);
 
   const fetchPool = async () => {
@@ -39,28 +38,40 @@ export default function ProducerDashboard() {
     }
   };
 
+  const fetchActiveJobs = async () => {
+    try {
+      const data = await api.getProducerActiveJobs() as Order[];
+      const formattedJobs = data.map(order => ({
+        id: order.id,
+        file: `Sipariş #${order.id} (Ürün: ${order.product_id})`,
+        progress: order.status === "printing" ? 50 : 100,
+        eta: "Hesaplanıyor",
+        filament: "Belirsiz",
+      }));
+      setActiveJobs(formattedJobs);
+    } catch (err) {
+      console.error("Aktif işler yüklenirken hata:", err);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const data = await api.getProducerStats() as any;
+      setStats({ balance: data.balance, delivered_count: data.delivered_count });
+    } catch (err) {
+      console.error("İstatistikler yüklenirken hata:", err);
+    }
+  };
+
   const handleClaim = async (orderId: number) => {
     try {
-      const claimedOrder = await api.claimOrder(orderId) as Order;
-      
-      // Remove from pending
-      setPendingOrders((prev) => prev.filter((o) => o.id !== orderId));
-      
-      // Add to active jobs
-      setActiveJobs((prev) => [
-        {
-          id: claimedOrder.id,
-          file: `Ürün #${claimedOrder.product_id} (x${claimedOrder.quantity})`,
-          progress: 0,
-          eta: "Hesaplanıyor...",
-          filament: "Belirsiz",
-        },
-        ...prev,
-      ]);
+      await api.claimOrder(orderId);
+      // Refresh all to reflect changes
+      fetchPool();
+      fetchActiveJobs();
     } catch (err: any) {
       console.error("İş alınırken hata:", err);
       alert(err.message || "Bu iş alınamadı. Başkası tarafından alınmış olabilir.");
-      // Refresh the pool in case it was claimed
       fetchPool();
     }
   };
@@ -75,6 +86,9 @@ export default function ProducerDashboard() {
             <p className="text-text-muted text-sm mt-1">Siparişlerinizi yönetin ve kazancınızı takip edin.</p>
           </div>
           <div className="flex gap-3">
+            <Link href="/designs">
+              <Button variant="primary" size="sm">Tasarımlarım</Button>
+            </Link>
             <Button variant="secondary" size="sm" onClick={fetchPool} disabled={loading}>
               {loading ? "Yenileniyor..." : "Yenile"}
             </Button>
@@ -86,7 +100,7 @@ export default function ProducerDashboard() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="bg-surface border border-border rounded-xl p-5 shadow-sm">
             <p className="text-sm text-text-muted mb-1">Bakiye</p>
-            <p className="text-2xl font-bold text-primary">₺2,450</p>
+            <p className="text-2xl font-bold text-primary">₺{stats.balance.toLocaleString("tr-TR")}</p>
           </div>
           <div className="bg-surface border border-border rounded-xl p-5 shadow-sm">
             <p className="text-sm text-text-muted mb-1">Bekleyen</p>
@@ -98,7 +112,7 @@ export default function ProducerDashboard() {
           </div>
           <div className="bg-surface border border-border rounded-xl p-5 shadow-sm">
             <p className="text-sm text-text-muted mb-1">Teslim Edilen</p>
-            <p className="text-2xl font-bold text-text-main">148</p>
+            <p className="text-2xl font-bold text-text-main">{stats.delivered_count}</p>
           </div>
         </div>
 
