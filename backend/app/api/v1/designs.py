@@ -58,7 +58,6 @@ async def create_design(
     title: str = Form(...),
     description: str = Form(""),
     suggested_price: float = Form(0.0),
-    royalty_percentage: float = Form(10.0),
     images: List[UploadFile] = File(default=[]),
     file_3d: Optional[UploadFile] = File(default=None),
     db: Session = Depends(get_db),
@@ -103,7 +102,7 @@ async def create_design(
         title=title,
         description=description,
         suggested_price=suggested_price,
-        royalty_percentage=royalty_percentage,
+        royalty_percentage=10.0,  # Sitenin standart telif payı
         image_urls=saved_image_urls,
         file_3d_url=saved_3d_url,
         is_approved=False,

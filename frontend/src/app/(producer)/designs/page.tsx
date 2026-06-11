@@ -34,7 +34,7 @@ export default function ProducerDesignsPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [suggestedPrice, setSuggestedPrice] = useState("");
-  const [royaltyPercentage, setRoyaltyPercentage] = useState("10");
+
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [file3d, setFile3d] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -93,7 +93,6 @@ export default function ProducerDesignsPage() {
       formData.append("title", title);
       formData.append("description", description);
       formData.append("suggested_price", suggestedPrice || "0");
-      formData.append("royalty_percentage", royaltyPercentage || "10");
 
       imageFiles.forEach((file) => {
         formData.append("images", file);
@@ -118,7 +117,7 @@ export default function ProducerDesignsPage() {
       setTitle("");
       setDescription("");
       setSuggestedPrice("");
-      setRoyaltyPercentage("10");
+
       setImageFiles([]);
       setFile3d(null);
       fetchDesigns();
@@ -229,31 +228,17 @@ export default function ProducerDesignsPage() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Title & Price Row */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Tasarım Adı</label>
-                  <input
-                    type="text"
-                    required
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors"
-                    placeholder="Örn: Özel Vazo Tasarımı v2"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">İstenen Telif (%)</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="50"
-                    value={royaltyPercentage}
-                    onChange={(e) => setRoyaltyPercentage(e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors"
-                    placeholder="10"
-                  />
-                </div>
+              {/* Title */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Tasarım Adı</label>
+                <input
+                  type="text"
+                  required
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors"
+                  placeholder="Örn: Özel Vazo Tasarımı v2"
+                />
               </div>
 
               {/* Description */}
@@ -409,7 +394,7 @@ export default function ProducerDesignsPage() {
                   <th className="px-6 py-4 font-semibold">Görsel</th>
                   <th className="px-6 py-4 font-semibold">Tasarım Adı</th>
                   <th className="px-6 py-4 font-semibold">Açıklama</th>
-                  <th className="px-6 py-4 font-semibold text-center">Telif %</th>
+
                   <th className="px-6 py-4 font-semibold text-center">3D Dosya</th>
                   <th className="px-6 py-4 font-semibold text-center">Durum</th>
                 </tr>
@@ -417,13 +402,13 @@ export default function ProducerDesignsPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-10 text-center text-gray-400">
+                    <td colSpan={5} className="px-6 py-10 text-center text-gray-400">
                       Yükleniyor...
                     </td>
                   </tr>
                 ) : designs.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-10 text-center text-gray-400">
+                    <td colSpan={5} className="px-6 py-10 text-center text-gray-400">
                       <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                       </svg>
@@ -450,11 +435,7 @@ export default function ProducerDesignsPage() {
                       </td>
                       <td className="px-6 py-4 font-medium text-gray-900">{design.title}</td>
                       <td className="px-6 py-4 text-gray-500 max-w-xs truncate">{design.description || "—"}</td>
-                      <td className="px-6 py-4 text-center">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-orange-50 text-orange-600 border border-orange-200">
-                          %{design.royalty_percentage}
-                        </span>
-                      </td>
+
                       <td className="px-6 py-4 text-center">
                         {design.file_3d_url ? (
                           <span className="inline-flex items-center gap-1 text-green-600 text-xs font-medium">
