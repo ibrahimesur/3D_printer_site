@@ -44,56 +44,28 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50 pt-32 pb-10">
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-        <div className="flex gap-10">
-          {/* Sidebar - Categories */}
-          <aside className="hidden lg:block w-48 flex-shrink-0">
-            <h3 className="text-sm font-semibold text-text-main mb-4">Kategoriler</h3>
-            <ul className="space-y-1">
-              {categories.map((cat) => (
-                <li key={cat.name}>
-                  <button
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                      cat.active
-                        ? "bg-primary/10 text-primary font-medium"
-                        : "text-text-muted hover:bg-surface hover:text-text-main"
-                    }`}
-                  >
-                    {cat.name}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </aside>
-
-          {/* Product Grid Area */}
-          <div className="flex-1">
-            {/* Banner */}
-            <div className="mb-8 rounded-2xl overflow-hidden bg-gradient-to-r from-primary to-orange-400 relative h-40 flex items-center shadow-sm">
-               <div className="px-8 relative z-10 text-white">
-                 <h2 className="text-3xl font-bold mb-2">3D Baskı Dünyasını Keşfet</h2>
-                 <p className="text-orange-50 max-w-md">Yüzlerce üreticiden hazır 3D baskı ürünlerini incele ve sipariş ver.</p>
-               </div>
-               <div className="absolute right-0 top-0 bottom-0 opacity-20">
-                  <svg className="h-full w-auto" viewBox="0 0 100 100" preserveAspectRatio="none" fill="currentColor">
-                    <polygon points="50,0 100,0 100,100 0,100" />
-                  </svg>
-               </div>
-            </div>
-
-            <div className="flex items-center justify-between mb-6">
-              <p className="text-sm text-text-muted">
-                {loading ? "Yükleniyor..." : `${products.length} ürün bulundu`}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
+            <h2 className="text-xl font-bold text-gray-800">Popüler Ürünler</h2>
+            <div className="flex items-center gap-4">
+              <p className="text-xs text-gray-500 hidden sm:block">
+                {loading ? "Yükleniyor..." : `${products.length} ürün listeleniyor`}
               </p>
-              <select className="input-field max-w-[220px] py-2 px-3 text-sm bg-surface">
+              <select className="border border-gray-300 rounded-md py-1.5 px-3 text-[13px] bg-white text-gray-700 outline-none focus:border-orange-500">
                 <option>Önerilen</option>
-                <option>Fiyat: Düşükten Yükseğe</option>
-                <option>Fiyat: Yüksekten Düşüğe</option>
-                <option>En Çok Değerlendirilen</option>
+                <option>En Düşük Fiyat</option>
+                <option>En Yüksek Fiyat</option>
+                <option>En Çok Satanlar</option>
               </select>
             </div>
+          </div>
+
+          {/* Product Grid */}
+          <div>
 
             {loading ? (
               <div className="text-center py-12 text-text-muted">Ürünler yükleniyor...</div>
@@ -102,36 +74,37 @@ export default function HomePage() {
                 Henüz satılacak ürün bulunmuyor.
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {products.map((product) => (
                   <Link
                     href={`/product/${product.id}`}
                     key={product.id}
-                    className="bg-surface border border-border rounded-xl overflow-hidden hover:shadow-md transition-shadow group block flex flex-col h-full"
+                    className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:border-orange-500 hover:shadow-md transition-all group block flex flex-col h-full"
                   >
-                    {/* Product Image Placeholder */}
-                    <div className="bg-white aspect-[3/4] w-full flex items-center justify-center text-5xl overflow-hidden border-b border-border/30">
+                    {/* Product Image */}
+                    <div className="relative w-full aspect-[3/4] bg-white flex items-center justify-center overflow-hidden border-b border-gray-100">
                       {product.image_url ? (
-                        <img src={product.image_url} alt={product.title} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" />
+                        <img src={product.image_url} alt={product.title} className="w-full h-full object-contain group-hover:scale-[1.03] transition-transform duration-300" />
                       ) : (
-                        <span className="text-gray-400 text-sm group-hover:scale-105 transition-transform duration-300">Görsel Yok</span>
+                        <span className="text-gray-300 text-xs">Görsel Yok</span>
                       )}
                     </div>
 
                     {/* Product Info */}
-                    <div className="p-4 bg-surface z-10 relative border-t border-border/50 flex-1 flex flex-col">
-                      <h3 className="font-medium text-text-main text-sm mb-1 line-clamp-1">{product.title}</h3>
-                      <div className="text-xs text-text-muted mb-2 line-clamp-2 min-h-[32px]">
-                        {product.description || "Açıklama bulunmuyor"}
+                    <div className="p-3 flex-1 flex flex-col justify-between">
+                      <div>
+                        <h3 className="font-semibold text-gray-800 text-[13px] leading-tight line-clamp-2 mb-1 group-hover:text-orange-500 transition-colors">
+                          {product.title}
+                        </h3>
+                        <div className="text-[11px] text-gray-500 mb-2 truncate">
+                          {product.category || "3D Baskı"}
+                        </div>
                       </div>
-                      <div className="mt-auto">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="font-bold text-text-main">₺{product.price.toFixed(2)}</span>
-                          <span className="text-xs text-text-muted">{product.filament_type || "-"}</span>
-                        </div>
-                        <div className="text-xs text-text-muted/70 truncate">
-                          {product.category || "Genel Kategori"}
-                        </div>
+                      
+                      <div className="mt-2">
+                        <span className="text-base font-bold text-orange-500">
+                          {product.price.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}
+                        </span>
                       </div>
                     </div>
                   </Link>

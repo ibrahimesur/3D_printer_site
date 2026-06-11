@@ -25,69 +25,79 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-surface/90 backdrop-blur-sm border-b border-border">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-16 gap-4">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <img src="/printago.svg" alt="PrintAgo Logo" className="h-12 w-auto object-contain" />
+          <Link href="/" className="flex items-center gap-2 flex-shrink-0">
+            <img src="/printago.svg" alt="PrintAgo Logo" className="h-10 w-auto object-contain" />
           </Link>
 
-          {/* Desktop Nav / Search */}
-          <div className="hidden md:flex flex-1 max-w-xl mx-8">
-            <div className="flex w-full bg-background border border-border rounded-lg overflow-hidden focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
-              <input
-                type="text"
-                placeholder="Ürün, kategori veya üretici ara..."
-                className="flex-1 px-4 py-2 bg-transparent text-text-main text-sm focus:outline-none placeholder:text-text-muted"
+          {/* Central Search Bar */}
+          <div className="hidden md:flex flex-1 max-w-2xl px-4">
+            <div className="relative w-full">
+              <input 
+                type="text" 
+                placeholder="Ürün, kategori veya marka ara..." 
+                className="w-full bg-gray-100 border-none rounded-md px-4 py-2 text-sm focus:ring-2 focus:ring-orange-500 focus:bg-white transition-all outline-none text-gray-800 placeholder-gray-500"
               />
-              <button className="px-4 bg-primary text-white hover:bg-primary-hover transition-colors flex items-center justify-center">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+              <button className="absolute right-3 top-1/2 -translate-y-1/2 text-orange-500">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
               </button>
             </div>
           </div>
 
-          {/* Auth & Cart Buttons */}
-          <div className="hidden md:flex items-center gap-4">
-            {isMounted && isAuthenticated() && (
-              <Link href="/favorites" className="text-text-main hover:text-red-500 transition-colors p-2" title="Favorilerim">
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
-                </svg>
-              </Link>
-            )}
-            <Link href="/cart" className="relative text-text-main hover:text-primary transition-colors p-2">
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
-              </svg>
-              {isMounted && totalItems > 0 && (
-                <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-red-600 rounded-full">
-                  {totalItems}
-                </span>
-              )}
-            </Link>
+          {/* Desktop Nav Actions */}
+          <div className="hidden md:flex items-center gap-4 flex-shrink-0">
+
             {isMounted && isAuthenticated() && user?.role === "admin" && (
-              <Link href="/admin" className="text-primary hover:text-primary-dark transition-colors text-sm font-semibold mr-2">
-                Yönetici
+              <Link href="/admin" className="text-primary hover:text-primary-dark transition-colors text-sm font-semibold">
+                Yönetici Paneli
               </Link>
             )}
             {isMounted && isAuthenticated() && user?.role === "producer" && (
-              <Link href="/dashboard" className="text-text-muted hover:text-primary transition-colors text-sm font-medium mr-2">
-                Üretici Paneli
+              <Link href="/dashboard" className="text-text-muted hover:text-primary transition-colors text-sm font-medium">
+                Üretici Paneline Git
               </Link>
             )}
-            <div className="w-px h-6 bg-border mx-1 hidden lg:block"></div>
+          </div>
+
+          {/* Admin & Auth Status */}
+          <div className="hidden md:flex items-center gap-3">
+            {isMounted && isAuthenticated() && (
+              <Link href="/favorites" className="flex flex-col items-center justify-center text-gray-600 hover:text-orange-500 transition-colors p-1" title="Favorilerim">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                </svg>
+                <span className="text-[11px] font-medium mt-0.5">Favorilerim</span>
+              </Link>
+            )}
+            <Link href="/cart" className="relative flex flex-col items-center justify-center text-gray-600 hover:text-orange-500 transition-colors p-1 group">
+              <div className="relative">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+              </svg>
+                  <span className="absolute -top-1 -right-2 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold leading-none text-white bg-orange-500 rounded-full">
+                    {totalItems}
+                  </span>
+                )}
+              </div>
+              <span className="text-[11px] font-medium mt-0.5">Sepetim</span>
+            </Link>
+            <div className="w-px h-5 bg-gray-200 mx-1"></div>
 
             {isMounted ? (
               isAuthenticated() ? (
-                <>
-                  <span className="text-sm font-medium text-text-muted">
-                    {user?.email}
-                  </span>
-                  <Button variant="ghost" size="sm" onClick={handleLogout}>Çıkış Yap</Button>
-                </>
+                <div className="flex flex-col items-start justify-center cursor-pointer group">
+                  <div className="flex items-center gap-1">
+                    <svg className="w-5 h-5 text-gray-600 group-hover:text-orange-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                    </svg>
+                    <span className="text-[11px] font-medium mt-0.5 text-gray-600 group-hover:text-orange-500 transition-colors">Hesabım</span>
+                  </div>
+                  {/* Logout can be a simple link below or we keep the button */}
+                  <button onClick={handleLogout} className="text-[10px] text-gray-400 hover:text-red-500">Çıkış Yap</button>
+                </div>
               ) : (
                 <>
                   <Link href="/auth/login">
@@ -156,6 +166,22 @@ export default function Navbar() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Categories Bar */}
+      <div className="hidden md:block border-t border-gray-100 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-8 h-10 text-[13px] font-medium text-gray-600 overflow-x-auto no-scrollbar">
+            <Link href="/" className="hover:text-orange-500 transition-colors whitespace-nowrap text-orange-500 font-semibold border-b-2 border-orange-500 h-full flex items-center">Tümü</Link>
+            <Link href="/?category=Ev" className="hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center">Ev & Yaşam</Link>
+            <Link href="/?category=Teknoloji" className="hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center">Teknoloji</Link>
+            <Link href="/?category=Ofis" className="hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center">Ofis</Link>
+            <Link href="/?category=Dekorasyon" className="hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center">Dekorasyon</Link>
+            <Link href="/?category=Aksesuar" className="hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center">Aksesuar</Link>
+            <Link href="/?category=Oyuncak" className="hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center">Oyuncak</Link>
+            <Link href="/?category=YedekParca" className="hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center">Yedek Parça</Link>
+          </div>
+        </div>
       </div>
     </nav>
   );
