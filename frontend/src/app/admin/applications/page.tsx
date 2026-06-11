@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import api from "@/services/api";
+import { useAuthStore } from "@/store/useAuthStore";
 
 interface Application {
   id: number;
@@ -18,10 +19,10 @@ export default function AdminApplicationsPage() {
 
   const fetchApplications = async () => {
     try {
-      // Create a specific api method or just use fetch with auth token
+      const token = useAuthStore.getState().token;
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/applications`, {
         headers: {
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
+          "Authorization": `Bearer ${token}`
         }
       });
       if (!response.ok) throw new Error("Başvurular alınamadı");
@@ -42,10 +43,11 @@ export default function AdminApplicationsPage() {
     if (!confirm(`Bu başvuruyu ${action === "approve" ? "onaylamak" : "reddetmek"} istediğinize emin misiniz?`)) return;
 
     try {
+      const token = useAuthStore.getState().token;
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/applications/${id}/${action}`, {
         method: "PUT",
         headers: {
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
+          "Authorization": `Bearer ${token}`
         }
       });
       
