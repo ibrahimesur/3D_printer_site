@@ -19,6 +19,15 @@ class CartItemSchema(BaseModel):
 class CheckoutRequest(BaseModel):
     items: List[CartItemSchema]
 
+class OrderProductSchema(BaseModel):
+    id: int
+    title: str
+    image_url: Optional[str] = None
+    image_urls: List[str] = []
+
+    class Config:
+        from_attributes = True
+
 class OrderResponse(BaseModel):
     id: int
     customer_id: int
@@ -26,6 +35,7 @@ class OrderResponse(BaseModel):
     quantity: int
     status: OrderStatus
     total_price: Optional[float] = None
+    product: Optional[OrderProductSchema] = None
 
     class Config:
         from_attributes = True
@@ -120,10 +130,10 @@ def get_producer_stats(db: Session = Depends(get_db), current_user: User = Depen
     }
 
 # Eklenebilecek eski endpointler
-@router.get("/")
-def list_orders(db: Session = Depends(get_db)):
+@router.get("/", response_model=List[OrderResponse])
+def list_orders(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """Kullanıcının siparişlerini listeler."""
-    return db.query(Order).all()
+    return db.query(Order).filter(Order.customer_id == current_user.id).all()
 
 @router.get("/{order_id}", response_model=OrderResponse)
 def get_order(order_id: int, db: Session = Depends(get_db)):
