@@ -70,7 +70,12 @@ async def create_design(
     saved_image_urls = []
     saved_3d_urls = []
 
-    # Save product images
+    from supabase import create_client, Client
+    from app.core.config import settings
+    
+    supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
+
+    # Save product images to Supabase
     for img in images:
         ext = os.path.splitext(img.filename or "")[1].lower()
         if ext not in ALLOWED_IMAGE_EXTENSIONS:
@@ -79,12 +84,34 @@ async def create_design(
                 detail=f"Geçersiz görsel formatı: {ext}. İzin verilen: {', '.join(ALLOWED_IMAGE_EXTENSIONS)}",
             )
         unique_name = f"{uuid.uuid4().hex}{ext}"
-        file_path = os.path.join(IMAGES_DIR, unique_name)
-        with open(file_path, "wb") as f:
-            shutil.copyfileobj(img.file, f)
-        saved_image_urls.append(f"/uploads/design_images/{unique_name}")
+        # Upload image to product-images bucket
+        file_content = await img.read()
+        
+        # Determine content type
+        content_type = "image/jpeg"
+        if ext == ".png":
+            content_type = "image/png"
+        elif ext == ".webp":
+            content_type = "image/webp"
 
-    # Save 3D files
+        try:
+            supabase.storage.from_("product-images").upload(
+                unique_name, 
+                file_content,
+                file_options={"content-type": content_type}
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Görsel Supabase'e yüklenirken hata oluştu (Sunucuyu yeniden başlattınız mı?): {str(e)}",
+            )
+        
+        # Get public url and save it
+        public_url = supabase.storage.from_("product-images").get_public_url(unique_name)
+        saved_image_urls.append(public_url)
+
+    # Save 3D files to Supabase
+    
     for f3d in files_3d:
         if f3d and f3d.filename:
             ext = os.path.splitext(f3d.filename)[1].lower()
@@ -93,11 +120,19 @@ async def create_design(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Geçersiz 3D dosya formatı: {ext}. İzin verilen: {', '.join(ALLOWED_3D_EXTENSIONS)}",
                 )
-            unique_name = f"{uuid.uuid4().hex}{ext}"
-            file_path = os.path.join(FILES_3D_DIR, unique_name)
-            with open(file_path, "wb") as f:
-                shutil.copyfileobj(f3d.file, f)
-            saved_3d_urls.append(f"/uploads/design_files/{unique_name}")
+            unique_name = f"{uuid.uuid4().hex}_{f3d.filename}"
+            # Read file content
+            file_content = await f3d.read()
+            try:
+                res = supabase.storage.from_("product-stls").upload(unique_name, file_content)
+            except Exception as e:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"3D Dosya Supabase'e yüklenirken hata oluştu (Sunucuyu yeniden başlattınız mı?): {str(e)}",
+                )
+            
+            # Just save the unique filename in the DB (can't download without signed url anyway)
+            saved_3d_urls.append(unique_name)
 
     new_design = Design(
         creator_id=current_user.id,

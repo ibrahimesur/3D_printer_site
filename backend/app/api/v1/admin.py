@@ -125,6 +125,16 @@ async def reject_design(
     if not design:
         raise HTTPException(status_code=404, detail="Tasarım bulunamadı")
 
+    # Delete files from Supabase
+    try:
+        from app.core.supabase_utils import delete_supabase_files
+        if design.image_urls:
+            delete_supabase_files("product-images", design.image_urls)
+        if design.file_3d_urls:
+            delete_supabase_files("product-stls", design.file_3d_urls)
+    except Exception as e:
+        print(f"Failed to delete files from Supabase: {e}")
+
     db.delete(design)
     db.commit()
 

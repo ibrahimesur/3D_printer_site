@@ -755,12 +755,9 @@ export default function AdminProductsPage() {
                         const filename = url.split('/').pop() || `dosya_${idx + 1}`;
                         const resolved = resolveFileUrl(url);
                         return (
-                          <a
+                          <div
                             key={idx}
-                            href={resolved || '#'}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors group"
+                            className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 transition-colors group"
                           >
                             <div className="flex-shrink-0 w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
                               <svg className="w-5 h-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -769,12 +766,9 @@ export default function AdminProductsPage() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-gray-900 truncate">{filename}</p>
-                              <p className="text-xs text-gray-500">STL / 3D Dosya</p>
+                              <p className="text-xs text-gray-500">STL / 3D Dosya (Güvenli Depo)</p>
                             </div>
-                            <svg className="w-5 h-5 text-gray-400 group-hover:text-orange-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                            </svg>
-                          </a>
+                          </div>
                         );
                       })}
                     </div>
@@ -791,12 +785,6 @@ export default function AdminProductsPage() {
 
               {/* Action Buttons */}
               <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-200">
-                <button
-                  onClick={() => setPreviewDesign(null)}
-                  className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  Kapat
-                </button>
                 <button
                   onClick={() => handleRejectDesign(previewDesign.id)}
                   className="px-5 py-2.5 text-sm font-bold text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors shadow-sm"
