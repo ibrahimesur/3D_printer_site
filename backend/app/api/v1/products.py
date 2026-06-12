@@ -200,9 +200,25 @@ def get_all_products(db: Session = Depends(get_db), current_admin = Depends(get_
 
 # ── Public Endpoints ───────────────────────────────────────────────
 @router.get("/products", response_model=List[ProductResponse])
-def get_products(db: Session = Depends(get_db)):
-    """Müşteriler için aktif ürünleri listeler."""
-    products = db.query(Product).filter(Product.is_active == True).all()
+def get_products(search: Optional[str] = None, db: Session = Depends(get_db)):
+    """Müşteriler için aktif ürünleri listeler. İsteğe bağlı arama destekler."""
+    query = db.query(Product).filter(Product.is_active == True)
+    
+    print(f"SEARCH PARAM RECEIVED: '{search}'")
+    if search:
+        from sqlalchemy import or_
+        search_term = f"%{search}%"
+        query = query.filter(
+            or_(
+                Product.title.ilike(search_term),
+                Product.description.ilike(search_term),
+                Product.category.ilike(search_term)
+            )
+        )
+        print("SQL QUERY:", str(query))
+        
+    products = query.all()
+    print("RETURNED COUNT:", len(products))
     return [product_to_response(product) for product in products]
 
 

@@ -164,8 +164,9 @@ class ApiClient {
     });
   }
   // ── Products ─────────────────────────────────────────────
-  async getProducts() {
-    return this.request("/products");
+  async getProducts(search?: string) {
+    const query = search ? `?search=${encodeURIComponent(search)}` : "";
+    return this.request(`/products${query}`);
   }
 
   async getProduct(id: number) {
