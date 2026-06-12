@@ -1,9 +1,16 @@
+export interface Subcategory {
+  slug: string;
+  name: string;
+  label: string;
+}
+
 export interface Category {
   slug: string;
   name: string;
   /** Navbar'da gösterilen etiket (emoji vb. içerebilir) */
   label: string;
   description: string;
+  subcategories?: Subcategory[];
 }
 
 export const CATEGORIES: Category[] = [
@@ -18,6 +25,13 @@ export const CATEGORIES: Category[] = [
     name: "Figür & Karakter",
     label: "Figür & Karakter",
     description: "Oyun, film ve anime karakterleri ile koleksiyonluk figürler.",
+    subcategories: [
+      {
+        slug: "oyun-karakteri",
+        name: "Oyun Karakteri",
+        label: "Oyun Karakteri",
+      }
+    ],
   },
   {
     slug: "dekoratif-urunler",

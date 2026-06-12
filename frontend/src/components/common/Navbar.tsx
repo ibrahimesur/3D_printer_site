@@ -246,7 +246,7 @@ export default function Navbar() {
       {/* Categories Bar */}
       <div className="hidden md:block border-t border-gray-100 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-8 h-10 text-[13px] font-medium text-gray-600 overflow-x-auto no-scrollbar">
+          <div className="flex items-center gap-8 h-10 text-[13px] font-medium text-gray-600 flex-wrap">
             <Link
               href="/"
               className={`hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center ${
@@ -258,20 +258,42 @@ export default function Navbar() {
             {CATEGORIES.map((category) => {
               const isActive = isMounted && pathname === `/category/${category.slug}`;
               const isWorldCup = category.slug === "dunya-kupasi-2026";
+              const hasSubcategories = category.subcategories && category.subcategories.length > 0;
+
               return (
-                <Link
-                  key={category.slug}
-                  href={`/category/${category.slug}`}
-                  className={`hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center ${
-                    isActive
-                      ? "text-orange-500 font-semibold border-b-2 border-orange-500"
-                      : isWorldCup
-                      ? "text-red-600 font-semibold"
-                      : ""
-                  }`}
-                >
-                  {category.label}
-                </Link>
+                <div key={category.slug} className="relative group h-full flex items-center">
+                  <Link
+                    href={`/category/${category.slug}`}
+                    className={`hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center ${
+                      isActive
+                        ? "text-orange-500 font-semibold border-b-2 border-orange-500"
+                        : isWorldCup
+                        ? "text-red-600 font-semibold"
+                        : ""
+                    }`}
+                  >
+                    {category.label}
+                    {hasSubcategories && (
+                      <svg className="w-3.5 h-3.5 ml-1 text-gray-400 group-hover:text-orange-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    )}
+                  </Link>
+
+                  {hasSubcategories && (
+                    <div className="absolute top-full left-0 w-48 bg-white border border-gray-100 shadow-lg rounded-b-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 py-2">
+                      {category.subcategories!.map((sub) => (
+                        <Link
+                          key={sub.slug}
+                          href={`/category/${category.slug}?sub=${sub.slug}`}
+                          className="block px-4 py-2.5 text-sm text-gray-600 hover:bg-orange-50 hover:text-orange-500 transition-colors font-medium"
+                        >
+                          {sub.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
