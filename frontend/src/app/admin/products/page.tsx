@@ -82,7 +82,7 @@ export default function AdminProductsPage() {
   const onCropImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const { width, height } = e.currentTarget;
     const percentCrop = centerCrop(
-      makeAspectCrop({ unit: '%', width: 90 }, 3 / 4, width, height),
+      makeAspectCrop({ unit: '%', width: 90 }, 1, width, height),
       width,
       height
     );
@@ -523,14 +523,15 @@ export default function AdminProductsPage() {
             <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl w-full">
               <div className="p-6">
                 <h3 className="text-lg font-bold text-gray-900 mb-4">Resmi Kırp (Köşelerden Çekin)</h3>
-                <div className="relative max-h-[60vh] w-full bg-gray-100 rounded-lg overflow-auto flex items-center justify-center border border-gray-200">
+                <div className="relative max-h-[60vh] w-full bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center border border-gray-200 p-2">
                   <ReactCrop
                     crop={crop}
                     onChange={(_, percentCrop) => setCrop(percentCrop)}
                     onComplete={(c) => setCompletedCrop(c)}
-                    aspect={3 / 4}
+                    aspect={1}
+                    className="max-w-full max-h-full flex items-center justify-center"
                   >
-                    <img src={imageToCrop} onLoad={onCropImageLoad} alt="Crop me" className="max-h-[60vh] w-auto object-contain" />
+                    <img src={imageToCrop} onLoad={onCropImageLoad} alt="Crop me" className="max-h-[55vh] max-w-full object-contain block" style={{ transform: 'translate3d(0,0,0)' }} />
                   </ReactCrop>
                 </div>
                 <div className="mt-6 flex justify-end items-center">

@@ -92,7 +92,6 @@ export default function ProducerDashboard() {
             <Button variant="secondary" size="sm" onClick={fetchPool} disabled={loading}>
               {loading ? "Yenileniyor..." : "Yenile"}
             </Button>
-            <Button variant="secondary" size="sm">Profili Düzenle</Button>
           </div>
         </div>
 
