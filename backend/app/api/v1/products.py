@@ -148,14 +148,19 @@ def update_product(id: int, product: ProductUpdate, db: Session = Depends(get_db
 
 @router.delete("/admin/products/{id}")
 def delete_product(id: int, db: Session = Depends(get_db), current_admin = Depends(get_current_admin_user)):
-    """Bir ürünü pasife alır (Sadece admin)."""
+    """Aktif ürünü pasife alır, zaten pasif olan ürünü kalıcı olarak siler."""
     db_product = db.query(Product).filter(Product.id == id).first()
     if not db_product:
         raise HTTPException(status_code=404, detail="Ürün bulunamadı")
 
-    db_product.is_active = False
-    db.commit()
-    return {"message": "Ürün başarıyla pasife alındı"}
+    if db_product.is_active:
+        db_product.is_active = False
+        db.commit()
+        return {"message": "Ürün başarıyla pasife alındı"}
+    else:
+        db.delete(db_product)
+        db.commit()
+        return {"message": "Ürün kalıcı olarak silindi"}
 
 
 @router.get("/admin/products", response_model=List[ProductResponse])

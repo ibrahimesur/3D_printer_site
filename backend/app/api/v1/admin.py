@@ -47,3 +47,85 @@ async def get_all_orders(
         }
         for order in orders
     ]
+
+
+@router.get("/designs/pending")
+async def get_pending_designs(
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_admin_user)
+):
+    """Admin için onay bekleyen tüm tasarımları listeler."""
+    from app.models.design import Design
+    designs = db.query(Design).filter(Design.is_approved == False).all()
+    return [
+        {
+            "id": d.id,
+            "title": d.title,
+            "description": d.description,
+            "price": d.suggested_price,
+            "image_url": d.image_urls[0] if d.image_urls else None,
+            "image_urls": d.image_urls,
+            "file_3d_urls": d.file_3d_urls,
+            "creator_id": d.creator_id,
+            "is_approved": d.is_approved
+        }
+        for d in designs
+    ]
+
+
+@router.post("/designs/{id}/approve")
+async def approve_design(
+    id: int,
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_admin_user)
+):
+    """Bir tasarımı onaylar ve onu aktif bir ürüne dönüştürür."""
+    from app.models.design import Design
+    from app.models.product import Product
+    from fastapi import HTTPException
+
+    design = db.query(Design).filter(Design.id == id).first()
+    if not design:
+        raise HTTPException(status_code=404, detail="Tasarım bulunamadı")
+    if design.is_approved:
+        raise HTTPException(status_code=400, detail="Tasarım zaten onaylanmış")
+
+    # Tasarımı onaylı olarak işaretle
+    design.is_approved = True
+
+    # Tasarımdan yeni bir ürün oluştur
+    new_product = Product(
+        title=design.title,
+        description=design.description,
+        price=design.suggested_price,
+        image_urls=design.image_urls,
+        image_url=design.image_urls[0] if design.image_urls else None,
+        design_id=design.id,
+        is_active=True
+    )
+    
+    db.add(new_product)
+    db.commit()
+    db.refresh(new_product)
+
+    return {"message": "Tasarım onaylandı ve ürün oluşturuldu", "product_id": new_product.id}
+
+
+@router.delete("/designs/{id}/reject")
+async def reject_design(
+    id: int,
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_admin_user)
+):
+    """Bir tasarımı reddeder ve sistemden siler."""
+    from app.models.design import Design
+    from fastapi import HTTPException
+
+    design = db.query(Design).filter(Design.id == id).first()
+    if not design:
+        raise HTTPException(status_code=404, detail="Tasarım bulunamadı")
+
+    db.delete(design)
+    db.commit()
+
+    return {"message": "Tasarım reddedildi ve silindi"}
