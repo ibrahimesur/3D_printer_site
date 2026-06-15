@@ -270,6 +270,13 @@ class ApiClient {
   async getSecurePrintJobStatus(jobId: number) {
     return this.request(`/producer/jobs/${jobId}/status`);
   }
+
+  async setupPrinter(data: any) {
+    return this.request("/producer/printers/setup", {
+      method: "PUT",
+      body: data,
+    });
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);

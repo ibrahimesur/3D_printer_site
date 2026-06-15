@@ -44,6 +44,7 @@ class FilamentSlot(BaseModel):
 class PrinterProfileCreate(BaseModel):
     """Yeni yazıcı profili oluşturma şeması."""
     brand_model: str
+    nozzle_diameter: float = 0.4
     api_type: str             # "Klipper" | "OctoPrint" | "BambuLab"
     api_url: str
     api_token: Optional[str] = None
@@ -61,6 +62,7 @@ class PrinterProfileCreate(BaseModel):
 class PrinterProfileUpdate(BaseModel):
     """Yazıcı profili güncelleme şeması (tüm alanlar opsiyonel)."""
     brand_model: Optional[str] = None
+    nozzle_diameter: Optional[float] = None
     api_type: Optional[str] = None
     api_url: Optional[str] = None
     api_token: Optional[str] = None
@@ -83,6 +85,7 @@ class PrinterProfileResponse(BaseModel):
     id: int
     user_id: int
     brand_model: str
+    nozzle_diameter: float
     api_type: str
     api_url: str
     has_api_token: bool       # Token var mı? (değer asla döndürülmez)
@@ -119,6 +122,7 @@ def _profile_to_response(profile: PrinterProfile) -> PrinterProfileResponse:
         id=profile.id,
         user_id=profile.user_id,
         brand_model=profile.brand_model,
+        nozzle_diameter=profile.nozzle_diameter,
         api_type=profile.api_type,
         api_url=profile.api_url,
         has_api_token=bool(profile.api_token_encrypted),
@@ -147,6 +151,7 @@ def create_printer(
     profile = PrinterProfile(
         user_id=current_user.id,
         brand_model=payload.brand_model,
+        nozzle_diameter=payload.nozzle_diameter,
         api_type=payload.api_type,
         api_url=payload.api_url,
         api_token_encrypted=encrypted,
@@ -233,6 +238,52 @@ def update_printer(
     db.commit()
     db.refresh(profile)
     return _profile_to_response(profile)
+
+
+@router.put("/setup", response_model=PrinterProfileResponse)
+def setup_printer(
+    payload: PrinterProfileCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Üretici sihirbazı üzerinden yazıcı kurulumu (Upsert mantığı).
+    Kullanıcının ilk yazıcısı varsa günceller, yoksa yenisini oluşturur.
+    """
+    _require_producer(current_user)
+
+    profile = db.query(PrinterProfile).filter(
+        PrinterProfile.user_id == current_user.id,
+        PrinterProfile.is_active == True
+    ).first()
+
+    encrypted_token = encrypt_token(payload.api_token) if payload.api_token else None
+
+    if profile:
+        profile.brand_model = payload.brand_model
+        profile.nozzle_diameter = payload.nozzle_diameter
+        profile.api_type = payload.api_type
+        profile.api_url = payload.api_url
+        if payload.api_token is not None:
+            profile.api_token_encrypted = encrypted_token
+        profile.filament_slots = [slot.model_dump() for slot in payload.filament_slots]
+    else:
+        profile = PrinterProfile(
+            user_id=current_user.id,
+            brand_model=payload.brand_model,
+            nozzle_diameter=payload.nozzle_diameter,
+            api_type=payload.api_type,
+            api_url=payload.api_url,
+            api_token_encrypted=encrypted_token,
+            filament_slots=[slot.model_dump() for slot in payload.filament_slots],
+            is_active=True,
+        )
+        db.add(profile)
+
+    db.commit()
+    db.refresh(profile)
+    return _profile_to_response(profile)
+
 
 
 @router.delete("/{printer_id}")

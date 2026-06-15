@@ -21,6 +21,7 @@ class PrinterProfile(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
     brand_model = Column(String(150), nullable=False)           # Örn: "Bambu Lab P1S"
+    nozzle_diameter = Column(Float, default=0.4)                # Örn: 0.2, 0.4, 0.6
     api_type = Column(String(50), nullable=False)               # Klipper / OctoPrint / BambuLab
     api_url = Column(String(500), nullable=False)               # Yazıcı bağlantı adresi
     api_token_encrypted = Column(Text, nullable=True)           # Fernet ile şifrelenmiş API key
