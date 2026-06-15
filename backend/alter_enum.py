@@ -1,9 +1,18 @@
-import psycopg2
-conn = psycopg2.connect('postgresql://postgres:postgres@localhost:5432/printer_db')
-conn.autocommit = True
-cur = conn.cursor()
+import sys
+import os
+sys.path.append(os.getcwd())
+from sqlalchemy import text
+from app.db.session import engine
+
 try:
-    cur.execute("ALTER TYPE userrole ADD VALUE 'ADMIN';")
-    print('ADMIN role added to enum!')
+    with engine.connect() as conn:
+        res = conn.execute(text("SELECT enumlabel FROM pg_enum WHERE enumtypid = 'orderstatus'::regtype;"))
+        for row in res:
+            print(row[0])
+        
+        # We also want to add 'PAID' since the previous error said: invalid input value for enum orderstatus: "PAID"
+        conn.execute(text("ALTER TYPE orderstatus ADD VALUE IF NOT EXISTS 'PAID';"))
+        conn.commit()
+        print('SUCCESS added PAID')
 except Exception as e:
-    print('Error:', e)
+    print('Failed:', e)

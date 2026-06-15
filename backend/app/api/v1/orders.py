@@ -5,6 +5,9 @@ from typing import Optional, List
 
 from app.db.session import get_db
 from app.models.order import Order, OrderStatus
+from app.api.deps import get_current_user
+from app.models.user import User, UserRole
+from app.models.profile import Profile
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
 
@@ -93,8 +96,7 @@ def mock_create_order(db: Session = Depends(get_db), current_user: User = Depend
             title="Dünya Kupası (Test)",
             description="Test siparişi ürünü",
             price=650.00,
-            is_active=True,
-            uploader_id=current_user.id
+            is_active=True
         )
         db.add(product)
         db.flush()
@@ -129,9 +131,7 @@ def get_order_pool(db: Session = Depends(get_db)):
     pending_orders = db.query(Order).filter(Order.status == OrderStatus.PENDING).all()
     return pending_orders
 
-from app.api.deps import get_current_user
-from app.models.user import User, UserRole
-from app.models.profile import Profile
+
 
 @router.post("/{order_id}/claim", response_model=OrderResponse)
 def claim_order(order_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
