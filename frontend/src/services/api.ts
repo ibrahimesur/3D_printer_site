@@ -75,6 +75,20 @@ class ApiClient {
     return this.request("/auth/me");
   }
 
+  async forgotPassword(email: string) {
+    return this.request("/auth/forgot-password", {
+      method: "POST",
+      body: { email },
+    });
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    return this.request("/auth/reset-password", {
+      method: "POST",
+      body: { token, new_password: newPassword },
+    });
+  }
+
   // ── Orders ───────────────────────────────────────────────
   async checkout(items: any[]) {
     return this.request("/orders/checkout", {
