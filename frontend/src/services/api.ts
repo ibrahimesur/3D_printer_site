@@ -147,9 +147,26 @@ class ApiClient {
   async getAdminOrders() {
     return this.request("/admin/orders");
   }
+
+  async getAdminPendingDesigns() {
+    return this.request("/admin/designs/pending");
+  }
+
+  async approveAdminDesign(designId: number) {
+    return this.request(`/admin/designs/${designId}/approve`, {
+      method: "POST",
+    });
+  }
+
+  async rejectAdminDesign(designId: number) {
+    return this.request(`/admin/designs/${designId}/reject`, {
+      method: "DELETE",
+    });
+  }
   // ── Products ─────────────────────────────────────────────
-  async getProducts() {
-    return this.request("/products");
+  async getProducts(search?: string) {
+    const query = search ? `?search=${encodeURIComponent(search)}` : "";
+    return this.request(`/products${query}`);
   }
 
   async getProduct(id: number) {

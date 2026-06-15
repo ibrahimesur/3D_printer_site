@@ -73,11 +73,9 @@ export default function FavoritesPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
+    <div className="min-h-screen bg-gray-50 pt-20 pb-10">
+      <div className="mx-auto max-w-6xl px-4">
       <div className="mb-8">
-        <p className="mb-1 text-xs font-bold uppercase tracking-widest text-primary">
-          Hesabım
-        </p>
         <h1 className="text-3xl font-bold text-text-main">Favorilerim</h1>
         <p className="mt-1 text-sm text-text-muted">
           Beğendiğin ürünleri buradan takip edebilirsin.
@@ -153,6 +151,7 @@ export default function FavoritesPage() {
           })}
         </div>
       )}
+    </div>
     </div>
   );
 }

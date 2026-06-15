@@ -33,3 +33,6 @@ venv/
 *.db
 pass.txt
 
+# User uploads (stored on disk, paths in DB)
+backend/uploads/design_images/
+backend/uploads/design_files/

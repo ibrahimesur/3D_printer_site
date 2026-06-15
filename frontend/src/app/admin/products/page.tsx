@@ -14,6 +14,15 @@ import 'react-image-crop/dist/ReactCrop.css';
 import getCroppedImg from '@/utils/cropImage';
 import { getPrimaryProductImage, getProductImages } from '@/lib/productImages';
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:8001';
+
+/** Relative upload paths → absolute URLs */
+function resolveFileUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (url.startsWith('http')) return url;
+  return `${BACKEND_URL}${url}`;
+}
+
 interface Product {
   id: number;
   title: string;
@@ -23,7 +32,10 @@ interface Product {
   filament_type: string | null;
   image_url: string | null;
   image_urls?: string[];
+  file_3d_urls?: string[];
   is_active: boolean;
+  is_design?: boolean;
+  creator_id?: number;
 }
 
 interface ProductFormData {
@@ -65,6 +77,10 @@ export default function AdminProductsPage() {
   const [completedCrop, setCompletedCrop] = useState<PixelCrop | null>(null);
   const [imageRef, setImageRef] = useState<HTMLImageElement | null>(null);
   const [isCropping, setIsCropping] = useState(false);
+
+  // Design Preview Modal state
+  const [previewDesign, setPreviewDesign] = useState<Product | null>(null);
+  const [previewImageIndex, setPreviewImageIndex] = useState(0);
 
   const onFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -137,12 +153,54 @@ export default function AdminProductsPage() {
     try {
       setLoading(true);
       const data = await api.getAdminProducts() as Product[];
-      setProducts(data);
+      try {
+        const pendingDesigns = await api.getAdminPendingDesigns() as Product[];
+        const formattedDesigns = pendingDesigns.map(d => ({
+          ...d,
+          is_design: true,
+          is_active: false,
+          category: "Tasarım",
+          filament_type: null
+        }));
+        setProducts([...formattedDesigns, ...data]);
+      } catch (err) {
+        console.error("Tasarımlar yüklenirken hata:", err);
+        setProducts(data);
+      }
     } catch (err) {
       console.error("Ürünler yüklenirken hata:", err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleApproveDesign = async (id: number) => {
+    if (!window.confirm("Bu tasarımı onaylayıp mağazada ürüne dönüştürmek istediğinize emin misiniz?")) return;
+    try {
+      await api.approveAdminDesign(id);
+      setPreviewDesign(null);
+      fetchProducts();
+      alert("Tasarım başarıyla onaylandı ve ürünlere eklendi!");
+    } catch (err: any) {
+      alert("Onaylanırken hata oluştu: " + err.message);
+    }
+  };
+
+  const handleRejectDesign = async (id: number) => {
+    if (!window.confirm("Bu tasarımı reddetmek istediğinize emin misiniz? Bu işlem geri alınamaz.")) return;
+    try {
+      await api.rejectAdminDesign(id);
+      setPreviewDesign(null);
+      fetchProducts();
+      alert("Tasarım reddedildi.");
+    } catch (err: any) {
+      alert("Reddedilirken hata oluştu: " + err.message);
+    }
+  };
+
+  const openDesignPreview = (product: Product) => {
+    setPreviewImageIndex(0);
+    setPreviewDesign(product);
   };
 
   const openModal = (product?: Product) => {
@@ -255,7 +313,12 @@ export default function AdminProductsPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Bu ürünü pasife almak istediğinize emin misiniz?")) return;
+    const product = products.find(p => p.id === id);
+    const isPassive = product && !product.is_active;
+    const msg = isPassive
+      ? "Bu ürün zaten pasif. Kalıcı olarak silmek istediğinize emin misiniz? Bu işlem geri alınamaz."
+      : "Bu ürünü pasife almak istediğinize emin misiniz?";
+    if (!window.confirm(msg)) return;
     try {
       await api.deleteProduct(id);
       fetchProducts();
@@ -333,15 +396,20 @@ export default function AdminProductsPage() {
                   </tr>
                 ) : (
                   filteredProducts.map((product) => (
-                    <tr key={product.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={product.is_design ? `design-${product.id}` : `product-${product.id}`} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="h-12 w-12 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden flex justify-center items-center">
-                            {getPrimaryProductImage(product) ? (
-                              <img className="h-12 w-12 object-cover" src={getPrimaryProductImage(product)!} alt="" />
-                            ) : (
-                              <span className="text-gray-400 text-xs">Görsel</span>
-                            )}
+                            {(() => {
+                              const src = product.is_design
+                                ? resolveFileUrl((product.image_urls || [])[0])
+                                : getPrimaryProductImage(product);
+                              return src ? (
+                                <img className="h-12 w-12 object-cover" src={src} alt="" />
+                              ) : (
+                                <span className="text-gray-400 text-xs">Görsel</span>
+                              );
+                            })()}
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">{product.title}</div>
@@ -357,17 +425,48 @@ export default function AdminProductsPage() {
                         <div className="text-xs text-gray-500">{product.filament_type || "-"}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          product.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {product.is_active ? 'Aktif' : 'Pasif'}
-                        </span>
+                        {product.is_design ? (
+                          <span className="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                            Onay Bekliyor
+                          </span>
+                        ) : (
+                          <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            product.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {product.is_active ? 'Aktif' : 'Pasif'}
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button onClick={() => openModal(product)} className="text-indigo-600 hover:text-indigo-900 mr-4">Düzenle</button>
-                        <button onClick={() => handleDelete(product.id)} className="text-red-600 hover:text-red-900" disabled={!product.is_active}>
-                          Kaldır
-                        </button>
+                        {product.is_design ? (
+                          <div className="flex items-center gap-3 justify-end">
+                            <button 
+                              onClick={() => openDesignPreview(product)} 
+                              className="text-blue-600 hover:text-blue-900 font-medium"
+                            >
+                              Önizle
+                            </button>
+                            <button 
+                              onClick={() => handleApproveDesign(product.id)} 
+                              className="text-green-600 hover:text-green-900 font-bold"
+                            >
+                              Onayla
+                            </button>
+                            <button 
+                              onClick={() => handleRejectDesign(product.id)} 
+                              className="text-red-600 hover:text-red-900 font-bold"
+                            >
+                              Reddet
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <button onClick={() => openModal(product)} className="text-indigo-600 hover:text-indigo-900 mr-4">Düzenle</button>
+                            <button onClick={() => handleDelete(product.id)} className="text-red-600 hover:text-red-900">
+                              Kaldır
+                            </button>
+                          </>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -542,6 +641,162 @@ export default function AdminProductsPage() {
                     </button>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Design Preview Modal */}
+      {previewDesign && (
+        <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="preview-modal" role="dialog" aria-modal="true">
+          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            {/* Overlay */}
+            <div className="fixed inset-0 bg-gray-900 bg-opacity-80 transition-opacity" onClick={() => setPreviewDesign(null)}></div>
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+
+            <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl w-full">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-4 flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-bold text-white">{previewDesign.title}</h3>
+                  <p className="text-orange-100 text-sm mt-0.5">Tasarım Önizleme &mdash; Üretici #{previewDesign.creator_id}</p>
+                </div>
+                <button onClick={() => setPreviewDesign(null)} className="text-white/80 hover:text-white transition-colors">
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+                {/* Description */}
+                {previewDesign.description && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Açıklama</h4>
+                    <p className="text-gray-700 bg-gray-50 rounded-lg p-4 text-sm leading-relaxed">{previewDesign.description}</p>
+                  </div>
+                )}
+
+                {/* Price */}
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Önerilen Fiyat</h4>
+                  <p className="text-2xl font-bold text-gray-900">₺{previewDesign.price.toFixed(2)}</p>
+                </div>
+
+                {/* Images */}
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                    Görseller
+                    <span className="ml-2 text-xs font-normal text-gray-400">({(previewDesign.image_urls || []).length} adet)</span>
+                  </h4>
+                  {(previewDesign.image_urls || []).length > 0 ? (
+                    <div>
+                      {/* Main image */}
+                      <div className="relative bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center" style={{minHeight: 320}}>
+                        <img
+                          src={resolveFileUrl(previewDesign.image_urls![previewImageIndex]) || ''}
+                          alt={`Görsel ${previewImageIndex + 1}`}
+                          className="max-h-[400px] max-w-full object-contain"
+                        />
+                        {previewDesign.image_urls!.length > 1 && (
+                          <>
+                            <button
+                              onClick={() => setPreviewImageIndex((i) => (i - 1 + previewDesign.image_urls!.length) % previewDesign.image_urls!.length)}
+                              className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-colors"
+                            >
+                              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                            </button>
+                            <button
+                              onClick={() => setPreviewImageIndex((i) => (i + 1) % previewDesign.image_urls!.length)}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-colors"
+                            >
+                              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                            </button>
+                          </>
+                        )}
+                      </div>
+                      {/* Thumbnails */}
+                      {previewDesign.image_urls!.length > 1 && (
+                        <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
+                          {previewDesign.image_urls!.map((url, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => setPreviewImageIndex(idx)}
+                              className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                                idx === previewImageIndex ? 'border-orange-500 ring-2 ring-orange-200' : 'border-gray-200 hover:border-gray-400'
+                              }`}
+                            >
+                              <img src={resolveFileUrl(url) || ''} alt="" className="w-full h-full object-cover" />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 rounded-xl p-8 text-center">
+                      <svg className="w-12 h-12 mx-auto text-gray-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.41a2.25 2.25 0 013.182 0l2.909 2.91m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                      </svg>
+                      <p className="text-gray-400 text-sm">Görsel yüklenmemiş</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* 3D Files */}
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                    3D Dosyalar
+                    <span className="ml-2 text-xs font-normal text-gray-400">({(previewDesign.file_3d_urls || []).length} adet)</span>
+                  </h4>
+                  {(previewDesign.file_3d_urls || []).length > 0 ? (
+                    <div className="space-y-2">
+                      {previewDesign.file_3d_urls!.map((url, idx) => {
+                        const filename = url.split('/').pop() || `dosya_${idx + 1}`;
+                        const resolved = resolveFileUrl(url);
+                        return (
+                          <div
+                            key={idx}
+                            className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 transition-colors group"
+                          >
+                            <div className="flex-shrink-0 w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                              <svg className="w-5 h-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                              </svg>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">{filename}</p>
+                              <p className="text-xs text-gray-500">STL / 3D Dosya (Güvenli Depo)</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 rounded-xl p-8 text-center">
+                      <svg className="w-12 h-12 mx-auto text-gray-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                      </svg>
+                      <p className="text-gray-400 text-sm">3D dosya yüklenmemiş</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-200">
+                <button
+                  onClick={() => handleRejectDesign(previewDesign.id)}
+                  className="px-5 py-2.5 text-sm font-bold text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors shadow-sm"
+                >
+                  Reddet
+                </button>
+                <button
+                  onClick={() => handleApproveDesign(previewDesign.id)}
+                  className="px-5 py-2.5 text-sm font-bold text-white bg-green-500 hover:bg-green-600 rounded-lg transition-colors shadow-sm"
+                >
+                  Onayla
+                </button>
               </div>
             </div>
           </div>

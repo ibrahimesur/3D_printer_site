@@ -135,6 +135,18 @@ def update_product(id: int, product: ProductUpdate, db: Session = Depends(get_db
         if k in update_data
     }
 
+    # Find removed images to delete from Supabase
+    if "image_urls" in image_payload:
+        old_images = set(db_product.image_urls or [])
+        new_images = set(image_payload["image_urls"] or [])
+        removed_images = list(old_images - new_images)
+        if removed_images:
+            try:
+                from app.core.supabase_utils import delete_supabase_files
+                delete_supabase_files("product-images", removed_images)
+            except Exception as e:
+                print(f"Failed to delete removed images from Supabase: {e}")
+
     for key, value in update_data.items():
         setattr(db_product, key, value)
 
@@ -148,14 +160,35 @@ def update_product(id: int, product: ProductUpdate, db: Session = Depends(get_db
 
 @router.delete("/admin/products/{id}")
 def delete_product(id: int, db: Session = Depends(get_db), current_admin = Depends(get_current_admin_user)):
-    """Bir ürünü pasife alır (Sadece admin)."""
+    """Aktif ürünü pasife alır, zaten pasif olan ürünü kalıcı olarak siler."""
     db_product = db.query(Product).filter(Product.id == id).first()
     if not db_product:
         raise HTTPException(status_code=404, detail="Ürün bulunamadı")
 
-    db_product.is_active = False
-    db.commit()
-    return {"message": "Ürün başarıyla pasife alındı"}
+    if db_product.is_active:
+        db_product.is_active = False
+        db.commit()
+        return {"message": "Ürün başarıyla pasife alındı"}
+    else:
+        # Product is passive, delete permanently
+        try:
+            from app.core.supabase_utils import delete_supabase_files
+            if db_product.image_urls:
+                delete_supabase_files("product-images", db_product.image_urls)
+            # Find associated design to delete STLs
+            if db_product.design_id:
+                from app.models.design import Design
+                design = db.query(Design).filter(Design.id == db_product.design_id).first()
+                if design and design.file_3d_urls:
+                    delete_supabase_files("product-stls", design.file_3d_urls)
+                    # Delete the design record as well to avoid dangling references
+                    db.delete(design)
+        except Exception as e:
+            print(f"Failed to delete product files from Supabase: {e}")
+
+        db.delete(db_product)
+        db.commit()
+        return {"message": "Ürün ve ilgili dosyaları kalıcı olarak silindi"}
 
 
 @router.get("/admin/products", response_model=List[ProductResponse])
@@ -167,9 +200,25 @@ def get_all_products(db: Session = Depends(get_db), current_admin = Depends(get_
 
 # ── Public Endpoints ───────────────────────────────────────────────
 @router.get("/products", response_model=List[ProductResponse])
-def get_products(db: Session = Depends(get_db)):
-    """Müşteriler için aktif ürünleri listeler."""
-    products = db.query(Product).filter(Product.is_active == True).all()
+def get_products(search: Optional[str] = None, db: Session = Depends(get_db)):
+    """Müşteriler için aktif ürünleri listeler. İsteğe bağlı arama destekler."""
+    query = db.query(Product).filter(Product.is_active == True)
+    
+    print(f"SEARCH PARAM RECEIVED: '{search}'")
+    if search:
+        from sqlalchemy import or_
+        search_term = f"%{search}%"
+        query = query.filter(
+            or_(
+                Product.title.ilike(search_term),
+                Product.description.ilike(search_term),
+                Product.category.ilike(search_term)
+            )
+        )
+        print("SQL QUERY:", str(query))
+        
+    products = query.all()
+    print("RETURNED COUNT:", len(products))
     return [product_to_response(product) for product in products]
 
 
