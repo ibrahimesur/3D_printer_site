@@ -137,6 +137,12 @@ class ApiClient {
     });
   }
 
+  async mockCreateOrder() {
+    return this.request("/orders/mock-create", {
+      method: "POST",
+    });
+  }
+
   // ── Pricing ──────────────────────────────────────────────
   async estimatePrice(stlFileUrl: string, filamentType: string = "PLA", infill: number = 20) {
     return this.request("/pricing/estimate", {

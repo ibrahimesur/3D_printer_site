@@ -40,7 +40,7 @@ export default function SecurePrintControl({
 
     const pollStatus = async () => {
       try {
-        const data: JobStatusResponse = await api.getSecurePrintJobStatus(jobId);
+        const data = (await api.getSecurePrintJobStatus(jobId)) as JobStatusResponse;
         
         setStatus(data.status);
         setProgress(data.progress_percentage);
@@ -78,7 +78,7 @@ export default function SecurePrintControl({
       setIsLoading(true);
       setError(null);
       
-      const res = await api.startSecurePrintJob(jobId);
+      const res = (await api.startSecurePrintJob(jobId)) as { status: string };
       setStatus(res.status);
       setIsPolling(true); // Polling'i başlat
     } catch (err: any) {
