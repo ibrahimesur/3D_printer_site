@@ -75,6 +75,20 @@ class ApiClient {
     return this.request("/auth/me");
   }
 
+  async forgotPassword(email: string) {
+    return this.request("/auth/forgot-password", {
+      method: "POST",
+      body: { email },
+    });
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    return this.request("/auth/reset-password", {
+      method: "POST",
+      body: { token, new_password: newPassword },
+    });
+  }
+
   // ── Orders ───────────────────────────────────────────────
   async checkout(items: any[]) {
     return this.request("/orders/checkout", {
@@ -120,6 +134,12 @@ class ApiClient {
     return this.request(`/orders/${orderId}/status`, {
       method: "PATCH",
       body: { status },
+    });
+  }
+
+  async mockCreateOrder() {
+    return this.request("/orders/mock-create", {
+      method: "POST",
     });
   }
 
@@ -237,6 +257,25 @@ class ApiClient {
 
   async removeFavorite(productId: number) {
     return this.request(`/favorites/${productId}`, { method: "DELETE" });
+  }
+
+  // ── Secure Print Streaming ───────────────────────────────
+  async startSecurePrintJob(jobId: number, gcodePath?: string) {
+    return this.request(`/producer/jobs/${jobId}/start`, {
+      method: "POST",
+      body: { gcode_path: gcodePath },
+    });
+  }
+
+  async getSecurePrintJobStatus(jobId: number) {
+    return this.request(`/producer/jobs/${jobId}/status`);
+  }
+
+  async setupPrinter(data: any) {
+    return this.request("/producer/printers/setup", {
+      method: "PUT",
+      body: data,
+    });
   }
 }
 

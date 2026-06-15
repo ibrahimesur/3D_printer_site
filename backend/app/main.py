@@ -14,10 +14,22 @@ async def lifespan(app: FastAPI):
     """Uygulama başlarken eksik şema güncellemelerini uygula."""
     try:
         from app.db.migrate import ensure_product_image_urls_column
-
         ensure_product_image_urls_column()
     except Exception as exc:
         print(f"Ürün görsel migrasyonu atlandı: {exc}")
+        
+    try:
+        from app.db.session import engine
+        from app.db.base import Base
+        from app.models.user import User
+        from app.models.product import Product
+        from app.models.order import Order
+        from app.models.printer_profile import PrinterProfile
+        from app.models.secure_print_job import SecurePrintJob
+        Base.metadata.create_all(bind=engine)
+        print("Tüm tablolar başarıyla kontrol edildi/oluşturuldu.")
+    except Exception as exc:
+        print(f"Tablo oluşturma atlandı: {exc}")
     yield
 
 
@@ -40,6 +52,7 @@ app.add_middleware(
         "http://localhost:6001",
         "http://127.0.0.1:6001",
     ],
+    allow_origin_regex="https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

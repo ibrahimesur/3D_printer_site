@@ -9,6 +9,7 @@ from app.db.base import Base
 class OrderStatus(str, enum.Enum):
     """Sipariş durumları."""
     PENDING = "pending"
+    PAID = "paid"
     QUOTED = "quoted"
     ACCEPTED = "accepted"
     PRINTING = "printing"

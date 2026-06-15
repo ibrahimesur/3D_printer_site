@@ -5,6 +5,9 @@ from typing import Optional, List
 
 from app.db.session import get_db
 from app.models.order import Order, OrderStatus
+from app.api.deps import get_current_user
+from app.models.user import User, UserRole
+from app.models.profile import Profile
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
 
@@ -66,15 +69,69 @@ def checkout(request: CheckoutRequest, db: Session = Depends(get_db)):
         
     return created_orders
 
+@router.post("/mock-create")
+def mock_create_order(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """Güvenli baskı testleri için mock sipariş ve iş (job) oluşturur."""
+    from app.models.secure_print_job import SecurePrintJob, PrintJobStatus
+    from app.models.printer_profile import PrinterProfile
+    from app.models.product import Product
+    import uuid
+    
+    # 1. Üreticiye ait test yazıcısı var mı kontrol et, yoksa yarat
+    printer = db.query(PrinterProfile).filter(PrinterProfile.user_id == current_user.id).first()
+    if not printer:
+        printer = PrinterProfile(
+            user_id=current_user.id,
+            brand_model="Bambu Lab P1S (Mock)",
+            api_type="BambuLab",
+            api_url="http://mock-printer.local"
+        )
+        db.add(printer)
+        db.flush()
+
+    # 2. Test amaçlı ürün kontrolü
+    product = db.query(Product).filter(Product.title == "Dünya Kupası (Test)").first()
+    if not product:
+        product = Product(
+            title="Dünya Kupası (Test)",
+            description="Test siparişi ürünü",
+            price=650.00,
+            is_active=True
+        )
+        db.add(product)
+        db.flush()
+
+    # 3. Sipariş oluştur
+    order = Order(
+        customer_id=current_user.id,
+        producer_id=current_user.id,  # Kendisi test edecek
+        product_id=product.id,
+        quantity=1,
+        total_price=650.00,
+        status=OrderStatus.PAID
+    )
+    db.add(order)
+    db.flush()
+
+    # 4. Secure Print Job oluştur
+    job = SecurePrintJob(
+        order_id=order.id,
+        printer_id=printer.id,
+        status=PrintJobStatus.PENDING
+    )
+    db.add(job)
+    db.commit()
+
+    return {"success": True, "order_id": order.id, "job_id": job.id}
+
+
 @router.get("/pool", response_model=List[OrderResponse])
 def get_order_pool(db: Session = Depends(get_db)):
     """Üreticiler için açık olan işleri listeler (status=pending)."""
     pending_orders = db.query(Order).filter(Order.status == OrderStatus.PENDING).all()
     return pending_orders
 
-from app.api.deps import get_current_user
-from app.models.user import User, UserRole
-from app.models.profile import Profile
+
 
 @router.post("/{order_id}/claim", response_model=OrderResponse)
 def claim_order(order_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):

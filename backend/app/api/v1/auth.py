@@ -1,7 +1,8 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
+from jose import jwt, JWTError
 
 from app.api.deps import get_db, get_current_user
 from app.core.config import settings
@@ -35,6 +36,15 @@ class UserProfile(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
 
 
 # ── Endpoints ─────────────────────────────────────────────────
@@ -101,3 +111,59 @@ async def login(data: UserLogin, db: Session = Depends(get_db)):
 async def get_my_profile(current_user: User = Depends(get_current_user)):
     """Oturum açmış kullanıcının bilgilerini döner."""
     return current_user
+
+
+@router.post("/forgot-password")
+async def forgot_password(data: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    """Şifre sıfırlama bağlantısı oluşturur."""
+    user = db.query(User).filter(User.email == data.email).first()
+    if not user:
+        # Güvenlik: Kullanıcı bulunamasa bile aynı mesajı döner
+        return {"message": "Şifre sıfırlama bağlantısı e-posta adresinize gönderildi."}
+
+    # Şifre sıfırlama token'ı oluştur (30 dakika geçerli)
+    expire = datetime.utcnow() + timedelta(minutes=30)
+    reset_token = jwt.encode(
+        {"sub": str(user.id), "exp": expire, "type": "password_reset"},
+        settings.SECRET_KEY,
+        algorithm=settings.ALGORITHM,
+    )
+
+    # Gerçek üretimde bu token e-posta ile gönderilir.
+    # Şimdilik token'ı döndürüyoruz.
+    return {
+        "message": "Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.",
+        "reset_token": reset_token,
+    }
+
+
+@router.post("/reset-password")
+async def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
+    """Token ile şifre sıfırlama işlemi yapar."""
+    try:
+        payload = jwt.decode(
+            data.token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
+        if payload.get("type") != "password_reset":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Geçersiz sıfırlama bağlantısı.",
+            )
+        user_id = payload.get("sub")
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Sıfırlama bağlantısı geçersiz veya süresi dolmuş.",
+        )
+
+    user = db.query(User).filter(User.id == int(user_id)).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Kullanıcı bulunamadı.",
+        )
+
+    user.hashed_password = get_password_hash(data.new_password)
+    db.commit()
+
+    return {"message": "Şifreniz başarıyla güncellendi."}

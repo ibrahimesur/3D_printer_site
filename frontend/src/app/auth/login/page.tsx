@@ -98,6 +98,15 @@ export default function LoginPage() {
             </div>
           </div>
 
+          <div className="flex items-center justify-end">
+            <Link
+              href="/auth/forgot-password"
+              className="text-sm font-medium text-primary hover:text-primary-dark"
+            >
+              Şifremi Unuttum
+            </Link>
+          </div>
+
           <div>
             <Button
               type="submit"

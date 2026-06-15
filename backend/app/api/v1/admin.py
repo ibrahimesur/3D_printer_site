@@ -65,8 +65,9 @@ async def get_pending_designs(
             "price": d.suggested_price,
             "image_url": d.image_urls[0] if d.image_urls else None,
             "image_urls": d.image_urls,
-            "file_3d_urls": d.file_3d_urls,
+            "file_3d_urls": getattr(d, 'file_3d_urls', getattr(d, 'file_3d_url', None)),
             "creator_id": d.creator_id,
+            "creator_email": d.creator.email if d.creator else "Bilinmiyor",
             "is_approved": d.is_approved
         }
         for d in designs

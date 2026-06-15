@@ -4,12 +4,17 @@ import { useCartStore } from "@/store/useCartStore";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import Button from "@/components/common/Button";
+import api from "@/services/api";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 export default function CartPage() {
   const { items, removeItem, addItem, clearCart } = useCartStore();
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const [isMounted, setIsMounted] = useState(false);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     setIsMounted(true);
@@ -23,6 +28,22 @@ export default function CartPage() {
       addItem({ ...item, quantity: delta });
     } else {
       removeItem(item.id, item.filament);
+    }
+  };
+
+  const handleMockCheckout = async () => {
+    try {
+      setIsCheckingOut(true);
+      const res: any = await api.mockCreateOrder();
+      if (res && res.success) {
+        clearCart();
+        router.push(`/producer/orders?orderId=${res.order_id}&jobId=${res.job_id}`);
+      }
+    } catch (err) {
+      console.error("Mock checkout error:", err);
+      alert("Sipariş oluşturulurken bir hata oluştu.");
+    } finally {
+      setIsCheckingOut(false);
     }
   };
 
@@ -165,11 +186,21 @@ export default function CartPage() {
                 </div>
 
                 <div className="mt-6">
-                  <Link href="/checkout" className="block w-full">
-                    <Button variant="primary" className="w-full py-3 text-base shadow-orange-500/20 shadow-lg">
-                      Sepeti Onayla
-                    </Button>
-                  </Link>
+                  <Button 
+                    variant="primary" 
+                    className="w-full py-3 text-base shadow-orange-500/20 shadow-lg flex justify-center items-center gap-2"
+                    onClick={handleMockCheckout}
+                    disabled={isCheckingOut}
+                  >
+                    {isCheckingOut ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Sipariş Hazırlanıyor...
+                      </>
+                    ) : (
+                      "Sepeti Onayla"
+                    )}
+                  </Button>
                 </div>
 
                 <div className="mt-4 text-xs text-gray-500 text-center flex items-center justify-center gap-1">
