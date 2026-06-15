@@ -6,7 +6,8 @@ import { useCartStore } from "@/store/useCartStore";
 import api from "@/services/api";
 
 export default function CheckoutPage() {
-  const { items, totalPrice, clearCart } = useCartStore();
+  const { items, clearCart } = useCartStore();
+  const totalPrice = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
