@@ -21,6 +21,11 @@ class Settings(BaseSettings):
     # Supabase
     SUPABASE_URL: str = ""
     SUPABASE_KEY: str = ""
+
+    # Slicer (PrusaSlicer CLI)
+    SLICER_BINARY: str = "prusa-slicer"                         # CLI çalıştırılabilir dosya yolu
+    SLICER_PROFILES_DIR: str = "slicer_profiles"                # Yazıcı profil dosyalarının bulunduğu dizin
+    SLICER_TEMP_DIR: str = ""                                   # Geçici G-code dizini (boş = sistem /tmp)
     
     class Config:
         env_file = ".env"
