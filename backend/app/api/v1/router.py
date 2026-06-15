@@ -9,6 +9,7 @@ from app.api.v1.reviews import router as reviews_router
 from app.api.v1.favorites import router as favorites_router
 from app.api.v1.applications import router as applications_router
 from app.api.v1.designs import router as designs_router
+from app.api.v1.producer_printers import router as producer_printers_router
 
 api_router = APIRouter()
 
@@ -21,3 +22,5 @@ api_router.include_router(reviews_router)
 api_router.include_router(favorites_router)
 api_router.include_router(applications_router)
 api_router.include_router(designs_router)
+api_router.include_router(producer_printers_router)
+
