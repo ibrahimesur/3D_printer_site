@@ -252,6 +252,18 @@ class ApiClient {
   async removeFavorite(productId: number) {
     return this.request(`/favorites/${productId}`, { method: "DELETE" });
   }
+
+  // ── Secure Print Streaming ───────────────────────────────
+  async startSecurePrintJob(jobId: number, gcodePath?: string) {
+    return this.request(`/producer/jobs/${jobId}/start`, {
+      method: "POST",
+      body: { gcode_path: gcodePath },
+    });
+  }
+
+  async getSecurePrintJobStatus(jobId: number) {
+    return this.request(`/producer/jobs/${jobId}/status`);
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);
