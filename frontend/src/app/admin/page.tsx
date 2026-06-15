@@ -35,8 +35,8 @@ export default function AdminDashboard() {
           api.getAdminOrders()
         ]);
 
-        setUsers(usersData);
-        setOrders(ordersData);
+        setUsers(usersData as UserData[]);
+        setOrders(ordersData as OrderData[]);
       } catch (error) {
         console.error("Veri çekme hatası:", error);
       } finally {
