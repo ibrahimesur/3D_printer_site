@@ -13,6 +13,7 @@ export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileCategoriesOpen, setIsMobileCategoriesOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
   const totalItems = useCartStore((state) => state.items.reduce((sum, item) => sum + item.quantity, 0));
@@ -83,6 +84,60 @@ export default function Navbar() {
             <img src="/printago.svg" alt="PrintAgo Logo" className="h-12 w-12 object-contain transform group-hover:rotate-6 transition-transform duration-300" />
             <span className="hidden sm:block text-3xl font-black tracking-tighter text-orange-500 lowercase group-hover:text-orange-600 transition-colors">printago</span>
           </Link>
+
+          {/* Categories Dropdown (Collapse Menu) */}
+          <div className="hidden md:block relative group py-2 flex-shrink-0">
+            <button className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-gray-700 hover:text-orange-500 transition-colors rounded-lg hover:bg-gray-50 border border-gray-100">
+              <svg className="w-4 h-4 text-gray-500 group-hover:text-orange-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+              Kategoriler
+            </button>
+
+            {/* Dropdown Box */}
+            <div className="absolute left-0 top-full mt-1 w-64 bg-white rounded-xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 py-3">
+              <div className="px-4 pb-2 border-b border-gray-50 mb-2">
+                <Link href="/" className="block py-1.5 text-sm font-semibold text-gray-900 hover:text-orange-500 transition-colors">
+                  Tüm Ürünler
+                </Link>
+              </div>
+              <div className="max-h-[350px] overflow-y-auto overflow-x-hidden px-2 space-y-1">
+                {CATEGORIES.map((category) => {
+                  const hasSub = category.subcategories && category.subcategories.length > 0;
+                  return (
+                    <div key={category.slug} className="relative group/sub flex flex-col">
+                      <Link
+                        href={`/category/${category.slug}`}
+                        className="flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-500 rounded-lg transition-colors"
+                      >
+                        <span>{category.label}</span>
+                        {hasSub && (
+                          <svg className="w-3 h-3 text-gray-400 group-hover/sub:rotate-90 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        )}
+                      </Link>
+
+                      {/* Subcategories (Collapsible Vertically on Hover) */}
+                      {hasSub && (
+                        <div className="hidden group-hover/sub:block pl-6 pr-2 py-1 space-y-1 bg-gray-50/50 border-l-2 border-orange-200 ml-4 mb-1 rounded-r-md">
+                          {category.subcategories!.map((sub) => (
+                            <Link
+                              key={sub.slug}
+                              href={`/category/${category.slug}?sub=${sub.slug}`}
+                              className="block py-1 text-xs text-gray-500 hover:text-orange-500 transition-colors font-medium"
+                            >
+                              {sub.label}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
 
           {/* Central Search Bar */}
           <div className="hidden md:flex flex-1 max-w-2xl px-4">
@@ -202,6 +257,35 @@ export default function Navbar() {
         {isMobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-border">
             <div className="flex flex-col gap-3">
+              {/* Mobile Categories Accordion */}
+              <div className="border-b border-gray-100 pb-2">
+                <button
+                  onClick={() => setIsMobileCategoriesOpen(!isMobileCategoriesOpen)}
+                  className="flex items-center justify-between w-full py-2 text-sm font-semibold text-gray-700 hover:text-orange-500"
+                >
+                  <span>Kategoriler</span>
+                  <svg className={`w-4 h-4 transform transition-transform duration-200 ${isMobileCategoriesOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {isMobileCategoriesOpen && (
+                  <div className="pl-4 mt-2 space-y-2">
+                    <Link href="/" onClick={() => { setIsMobileMenuOpen(false); setIsMobileCategoriesOpen(false); }} className="block py-1 text-sm text-gray-600 hover:text-orange-500">
+                      Tüm Ürünler
+                    </Link>
+                    {CATEGORIES.map((category) => (
+                      <Link
+                        key={category.slug}
+                        href={`/category/${category.slug}`}
+                        onClick={() => { setIsMobileMenuOpen(false); setIsMobileCategoriesOpen(false); }}
+                        className="block py-1 text-sm text-gray-600 hover:text-orange-500"
+                      >
+                        {category.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {isMounted && isAuthenticated() && user?.role === "admin" && (
                 <Link href="/admin" className="text-primary hover:text-primary-dark transition-colors py-2 text-sm font-semibold">Yönetici Paneli</Link>
@@ -241,63 +325,6 @@ export default function Navbar() {
             </div>
           </div>
         )}
-      </div>
-
-      {/* Categories Bar */}
-      <div className="hidden md:block border-t border-gray-100 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-8 h-10 text-[13px] font-medium text-gray-600 flex-wrap">
-            <Link
-              href="/"
-              className={`hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center ${
-                isMounted && pathname === "/" ? "text-orange-500 font-semibold border-b-2 border-orange-500" : ""
-              }`}
-            >
-              Tümü
-            </Link>
-            {CATEGORIES.map((category) => {
-              const isActive = isMounted && pathname === `/category/${category.slug}`;
-              const isWorldCup = category.slug === "dunya-kupasi-2026";
-              const hasSubcategories = category.subcategories && category.subcategories.length > 0;
-
-              return (
-                <div key={category.slug} className="relative group h-full flex items-center">
-                  <Link
-                    href={`/category/${category.slug}`}
-                    className={`hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center ${
-                      isActive
-                        ? "text-orange-500 font-semibold border-b-2 border-orange-500"
-                        : isWorldCup
-                        ? "text-red-600 font-semibold"
-                        : ""
-                    }`}
-                  >
-                    {category.label}
-                    {hasSubcategories && (
-                      <svg className="w-3.5 h-3.5 ml-1 text-gray-400 group-hover:text-orange-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    )}
-                  </Link>
-
-                  {hasSubcategories && (
-                    <div className="absolute top-full left-0 w-48 bg-white border border-gray-100 shadow-lg rounded-b-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 py-2">
-                      {category.subcategories!.map((sub) => (
-                        <Link
-                          key={sub.slug}
-                          href={`/category/${category.slug}?sub=${sub.slug}`}
-                          className="block px-4 py-2.5 text-sm text-gray-600 hover:bg-orange-50 hover:text-orange-500 transition-colors font-medium"
-                        >
-                          {sub.label}
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
       </div>
     </nav>
   );
