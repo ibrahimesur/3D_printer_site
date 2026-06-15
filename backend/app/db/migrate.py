@@ -35,3 +35,16 @@ def ensure_product_image_urls_column() -> None:
             )
 
         print(f"image_urls sütunu eklendi, {len(rows)} ürün güncellendi.")
+
+
+def ensure_secure_print_jobs_gcode_path_column() -> None:
+    """secure_print_jobs tablosuna gcode_path sütunu ekler."""
+    if _column_exists("secure_print_jobs", "gcode_path"):
+        return
+
+    with engine.begin() as conn:
+        conn.execute(
+            text("ALTER TABLE secure_print_jobs ADD COLUMN gcode_path VARCHAR(500)")
+        )
+        print("gcode_path sütunu secure_print_jobs tablosuna eklendi.")
+

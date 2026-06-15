@@ -40,12 +40,20 @@ export default function CheckoutPage() {
           </div>
           <h2 className="text-3xl font-extrabold text-gray-900 mb-3">Siparişiniz Alındı!</h2>
           <p className="text-gray-500 mb-8 text-lg">Siparişiniz başarıyla oluşturuldu ve üretici havuzuna eklendi.</p>
-          <button
-            onClick={() => router.push("/")}
-            className="w-full py-4 px-4 border border-transparent rounded-xl shadow-sm text-lg font-medium text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all transform hover:-translate-y-1"
-          >
-            Alışverişe Dön
-          </button>
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => router.push("/dashboard")}
+              className="w-full py-4 px-4 border border-transparent rounded-xl shadow-sm text-lg font-bold text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all transform hover:-translate-y-1"
+            >
+              Üretici Paneline Git (İşi Al)
+            </button>
+            <button
+              onClick={() => router.push("/")}
+              className="w-full py-3 px-4 border border-gray-200 rounded-xl text-base font-medium text-gray-600 hover:bg-gray-50 focus:outline-none transition-all"
+            >
+              Alışverişe Dön
+            </button>
+          </div>
         </div>
       </div>
     );

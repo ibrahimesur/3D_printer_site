@@ -1,3 +1,5 @@
+import { useAuthStore } from "@/store/useAuthStore";
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api/v1";
 
 interface RequestOptions {
@@ -49,6 +51,11 @@ class ApiClient {
     });
 
     if (!response.ok) {
+      if (response.status === 401) {
+        if (typeof window !== "undefined") {
+          useAuthStore.getState().logout();
+        }
+      }
       const error = await response.json().catch(() => ({ detail: "Bir hata oluştu" }));
       throw new Error(error.detail || `HTTP ${response.status}`);
     }

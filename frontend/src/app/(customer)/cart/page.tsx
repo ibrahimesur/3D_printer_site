@@ -1,6 +1,7 @@
 "use client";
 
 import { useCartStore } from "@/store/useCartStore";
+import { useAuthStore } from "@/store/useAuthStore";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import Button from "@/components/common/Button";
@@ -10,6 +11,7 @@ import { Loader2 } from "lucide-react";
 
 export default function CartPage() {
   const { items, removeItem, addItem, clearCart } = useCartStore();
+  const { isAuthenticated } = useAuthStore();
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const [isMounted, setIsMounted] = useState(false);
@@ -32,15 +34,20 @@ export default function CartPage() {
   };
 
   const handleMockCheckout = async () => {
+    if (!isAuthenticated()) {
+      router.push("/auth/login");
+      return;
+    }
     try {
       setIsCheckingOut(true);
-      const res: any = await api.mockCreateOrder();
-      if (res && res.success) {
-        clearCart();
-        router.push(`/producer/orders?orderId=${res.order_id}&jobId=${res.job_id}`);
-      }
+      // Create actual pending orders from the cart items
+      await api.checkout(items);
+      clearCart();
+      alert("Siparişiniz başarıyla alındı ve üretici havuzuna eklendi!");
+      // Redirect to Producer Dashboard so they can claim and print it
+      router.push("/dashboard");
     } catch (err) {
-      console.error("Mock checkout error:", err);
+      console.error("Checkout error:", err);
       alert("Sipariş oluşturulurken bir hata oluştu.");
     } finally {
       setIsCheckingOut(false);
