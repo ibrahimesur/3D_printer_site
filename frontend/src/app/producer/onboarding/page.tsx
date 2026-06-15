@@ -100,7 +100,7 @@ export default function ProducerOnboardingPage() {
           <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-200 -z-10 -translate-y-1/2 rounded-full"></div>
           <div 
             className="absolute top-1/2 left-0 h-1 bg-orange-500 -z-10 -translate-y-1/2 rounded-full transition-all duration-500"
-            style={{ width: \`\${((currentStep - 1) / 2) * 100}%\` }}
+            style={{ width: `${((currentStep - 1) / 2) * 100}%` }}
           ></div>
           <div className="flex justify-between items-center w-full">
             {steps.map((step) => {
@@ -110,13 +110,13 @@ export default function ProducerOnboardingPage() {
               return (
                 <div key={step.num} className="flex flex-col items-center">
                   <div 
-                    className={\`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors duration-300 \${
+                    className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors duration-300 ${
                       isActive ? "bg-orange-500 border-orange-500 text-white" : "bg-white border-gray-300 text-gray-400"
-                    } \${isCurrent ? "ring-4 ring-orange-100" : ""}\`}
+                    } ${isCurrent ? "ring-4 ring-orange-100" : ""}`}
                   >
                     {isActive && !isCurrent ? <Check className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
                   </div>
-                  <span className={\`mt-2 text-xs font-medium \${isActive ? "text-orange-600" : "text-gray-400"}\`}>
+                  <span className={`mt-2 text-xs font-medium ${isActive ? "text-orange-600" : "text-gray-400"}`}>
                     {step.title}
                   </span>
                 </div>
@@ -183,11 +183,11 @@ export default function ProducerOnboardingPage() {
                       key={type}
                       type="button"
                       onClick={() => setApiType(type)}
-                      className={\`py-2.5 px-3 border rounded-lg text-sm font-medium transition-all \${
+                      className={`py-2.5 px-3 border rounded-lg text-sm font-medium transition-all ${
                         apiType === type 
                           ? "bg-orange-50 border-orange-500 text-orange-700 ring-1 ring-orange-500" 
                           : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
-                      }\`}
+                      }`}
                     >
                       {type}
                     </button>
@@ -279,7 +279,7 @@ export default function ProducerOnboardingPage() {
           <Button 
             variant="outline" 
             onClick={handlePrev} 
-            className={\`px-6 \${currentStep === 1 ? 'invisible' : ''}\`}
+            className={`px-6 ${currentStep === 1 ? 'invisible' : ''}`}
           >
             Geri
           </Button>

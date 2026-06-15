@@ -37,7 +37,7 @@ export default function CartPage() {
       const res: any = await api.mockCreateOrder();
       if (res && res.success) {
         clearCart();
-        router.push("/producer/orders?id=" + res.order_id);
+        router.push(`/producer/orders?orderId=${res.order_id}&jobId=${res.job_id}`);
       }
     } catch (err) {
       console.error("Mock checkout error:", err);
