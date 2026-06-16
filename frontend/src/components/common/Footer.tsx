@@ -23,7 +23,7 @@ export default function Footer() {
           {/* Brand Block */}
           <div className="col-span-2 md:col-span-1 space-y-3">
             <Link href="/" className="flex items-center gap-2">
-              <span className="text-2xl font-black tracking-tighter text-orange-500 lowercase">printago</span>
+              <span className="text-2xl font-black tracking-tighter text-orange-500 lowercase">filamengo</span>
             </Link>
             <p className="text-xs text-gray-500 leading-relaxed">
               Türkiye'nin lider 3D baskı pazaryeri. Kendi tasarımınızı yükleyerek anında fiyat teklifi alın.
@@ -81,11 +81,10 @@ export default function Footer() {
             </ul>
           </div>
         </div>
-
         {/* Footer Bottom */}
         <div className="border-t border-gray-100 mt-6 pt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-[11px] text-gray-400">
-            &copy; {new Date().getFullYear()} PrintAgo. Tüm hakları saklıdır.
+            &copy; {new Date().getFullYear()} Filamengo. Tüm hakları saklıdır.
           </p>
           {/* Payment Badges with Actual SVG Logos */}
           <div className="flex items-center gap-3">

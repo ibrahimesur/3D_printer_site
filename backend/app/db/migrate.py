@@ -48,3 +48,16 @@ def ensure_secure_print_jobs_gcode_path_column() -> None:
         )
         print("gcode_path sütunu secure_print_jobs tablosuna eklendi.")
 
+
+def ensure_product_color_and_filament_type_columns() -> None:
+    """products tablosuna color ve filament_type sütunlarını ekler."""
+    if not _column_exists("products", "color"):
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE products ADD COLUMN color VARCHAR(50)"))
+            print("color sütunu products tablosuna eklendi.")
+            
+    if not _column_exists("products", "filament_type"):
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE products ADD COLUMN filament_type VARCHAR(50)"))
+            print("filament_type sütunu products tablosuna eklendi.")
+

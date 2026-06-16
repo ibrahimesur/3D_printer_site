@@ -81,15 +81,15 @@ export default function ApplyProducerPage() {
         <div className="md:w-1/2 bg-orange-50/70 p-5 md:p-6 flex flex-col justify-between border-r border-orange-100">
           <div>
             <Link href="/" className="inline-flex items-center gap-1.5 mb-2 group">
-              <img src="/printago.svg" alt="PrintAgo" className="w-5 h-5" />
-              <span className="text-lg font-black tracking-tighter text-orange-500 lowercase">printago</span>
+              <img src="/filamengo.png" alt="Filamengo" className="w-5 h-5" />
+              <span className="text-lg font-black tracking-tighter text-orange-500 lowercase">filamengo</span>
             </Link>
             
-            <h1 className="text-xl font-bold text-gray-900 mb-2">PrintAgo Üreticisi Olun</h1>
+            <h1 className="text-xl font-bold text-gray-900 mb-2">Filamengo Üreticisi Olun</h1>
             
             <div className="space-y-2.5 text-gray-600 mb-4">
               <p className="text-[11px] leading-relaxed text-gray-500">
-                PrintAgo, 3D baskı teknolojisini herkes için kolaylaştıran Türkiye'nin lider pazaryeridir. Geniş müşteri ağımıza üretim yapacak profesyonel 3D yazıcı üreticilerini arıyoruz.
+                Filamengo, 3D baskı teknolojisini herkes için kolaylaştıran Türkiye'nin lider pazaryeridir. Geniş müşteri ağımıza üretim yapacak profesyonel 3D yazıcı üreticilerini arıyoruz.
               </p>
               
               <div className="flex gap-2">
