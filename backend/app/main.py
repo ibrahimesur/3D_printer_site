@@ -85,3 +85,20 @@ async def root():
 async def health_check():
     """Sistem sağlık durumu."""
     return {"status": "healthy"}
+
+
+@app.get("/test_db", tags=["Root"])
+def test_db_connection():
+    """DB bağlantısını test eder ve hata varsa JSON olarak Traceback döndürür."""
+    import traceback
+    try:
+        from app.db.session import SessionLocal
+        from sqlalchemy import text
+        db = SessionLocal()
+        try:
+            result = db.execute(text("SELECT count(*) FROM users;")).scalar()
+            return {"status": "success", "users_count": result}
+        finally:
+            db.close()
+    except Exception as e:
+        return {"status": "error", "error": str(e), "traceback": traceback.format_exc()}
