@@ -19,6 +19,7 @@ class CartItemSchema(BaseModel):
     price: float
     name: Optional[str] = None
     filament: Optional[str] = None
+    color: Optional[str] = None
 
 class CheckoutRequest(BaseModel):
     items: List[CartItemSchema]
@@ -28,6 +29,8 @@ class OrderProductSchema(BaseModel):
     title: str
     image_url: Optional[str] = None
     image_urls: List[str] = []
+    filament_type: Optional[str] = None
+    color: Optional[str] = None
 
     class Config:
         from_attributes = True

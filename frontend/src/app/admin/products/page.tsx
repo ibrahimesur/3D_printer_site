@@ -30,6 +30,7 @@ interface Product {
   price: number;
   category: string | null;
   filament_type: string | null;
+  color: string | null;
   image_url: string | null;
   image_urls?: string[];
   file_3d_urls?: string[];
@@ -45,6 +46,7 @@ interface ProductFormData {
   price: number | "";
   category: string;
   filament_type: string;
+  color: string;
   image_urls: string[];
   is_active: boolean;
 }
@@ -65,6 +67,7 @@ export default function AdminProductsPage() {
     price: "",
     category: "",
     filament_type: "",
+    color: "",
     image_urls: [],
     is_active: true,
   });
@@ -213,6 +216,7 @@ export default function AdminProductsPage() {
         price: Number(product.price),
         category: product.category || "",
         filament_type: product.filament_type || "",
+        color: product.color || "",
         image_urls: getProductImages(product),
         is_active: product.is_active,
       });
@@ -224,6 +228,7 @@ export default function AdminProductsPage() {
         price: "",
         category: "",
         filament_type: "",
+        color: "",
         image_urls: [],
         is_active: true,
       });
@@ -283,6 +288,7 @@ export default function AdminProductsPage() {
       price,
       category: formData.category,
       filament_type: formData.filament_type,
+      color: formData.color,
       is_active: formData.is_active,
       image_urls: [...formData.image_urls],
       image_url: formData.image_urls[0] || null,
@@ -550,7 +556,7 @@ export default function AdminProductsPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-3 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Filament Türü</label>
                         <select name="filament_type" value={formData.filament_type} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 bg-white">
@@ -560,6 +566,10 @@ export default function AdminProductsPage() {
                           <option value="ABS">ABS</option>
                           <option value="TPU">TPU (Esnek)</option>
                         </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Renk</label>
+                        <input type="text" name="color" placeholder="Örn: Siyah, Neon Orange" value={formData.color} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500" />
                       </div>
                       <div className="flex items-center mt-6">
                         <input type="checkbox" name="is_active" id="is_active" checked={formData.is_active} onChange={handleChange} className="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded" />
