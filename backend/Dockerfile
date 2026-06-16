@@ -8,11 +8,9 @@ RUN apt-get update && apt-get install -y \
     wget \
     bzip2 \
     tar \
-    libgl1-mesa-glx \
+    libgl1 \
     libglu1-mesa \
     libgtk-3-0 \
-    libgdk-pixbuf2.0-0 \
-    libglib2.0-0 \
     libosmesa6 \
     && rm -rf /var/lib/apt/lists/*
 
