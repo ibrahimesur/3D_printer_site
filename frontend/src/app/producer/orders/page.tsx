@@ -11,11 +11,53 @@ function OrderDetailsContent() {
   const orderId = searchParams.get("orderId");
   const jobId = searchParams.get("jobId");
 
+  const [order, setOrder] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (!orderId) {
+      setLoading(false);
+      return;
+    }
+
+    import("@/services/api").then((module) => {
+      const api = module.default;
+      api.getOrder(parseInt(orderId))
+        .then((data) => {
+          setOrder(data);
+        })
+        .catch((err) => {
+          console.error("Order fetch error:", err);
+          setError("Sipariş bilgileri alınamadı.");
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    });
+  }, [orderId]);
+
   if (!orderId || !jobId) {
     return (
       <div className="text-center py-20">
         <h2 className="text-2xl font-bold text-gray-800">Sipariş Bulunamadı</h2>
         <p className="text-gray-500 mt-2">Geçerli bir Sipariş ID ve Görev ID sağlanmadı.</p>
+        <Link href="/dashboard" className="mt-6 inline-block text-orange-500 hover:underline">
+          Panele Dön
+        </Link>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return <div className="text-center py-20 text-gray-500">Yükleniyor...</div>;
+  }
+
+  if (error || !order) {
+    return (
+      <div className="text-center py-20">
+        <h2 className="text-2xl font-bold text-red-600">Hata</h2>
+        <p className="text-gray-500 mt-2">{error || "Sipariş bulunamadı."}</p>
         <Link href="/dashboard" className="mt-6 inline-block text-orange-500 hover:underline">
           Panele Dön
         </Link>
@@ -50,19 +92,19 @@ function OrderDetailsContent() {
             <div className="space-y-4">
               <div className="flex justify-between items-center pb-4 border-b border-gray-100">
                 <span className="text-sm text-gray-500">Ürün Modeli</span>
-                <span className="font-medium text-gray-900 text-sm">Dünya Kupası (Test)</span>
+                <span className="font-medium text-gray-900 text-sm">{order.product?.title || "Bilinmiyor"}</span>
               </div>
               <div className="flex justify-between items-center pb-4 border-b border-gray-100">
                 <span className="text-sm text-gray-500">Malzeme</span>
-                <span className="font-medium text-gray-900 text-sm">PLA</span>
+                <span className="font-medium text-gray-900 text-sm">{order.product?.filament_type || "Belirtilmemiş"}</span>
               </div>
               <div className="flex justify-between items-center pb-4 border-b border-gray-100">
                 <span className="text-sm text-gray-500">Renk</span>
-                <span className="font-medium text-gray-900 text-sm">Neon Orange</span>
+                <span className="font-medium text-gray-900 text-sm">{order.product?.color || "Belirtilmemiş"}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-500">Adet</span>
-                <span className="font-bold text-gray-900">1</span>
+                <span className="font-bold text-gray-900">{order.quantity || 1}</span>
               </div>
             </div>
           </div>

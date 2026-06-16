@@ -52,6 +52,7 @@ def product_to_response(product: Product) -> "ProductResponse":
         price=product.price,
         category=product.category,
         filament_type=product.filament_type,
+        color=product.color,
         image_url=urls[0] if urls else product.image_url,
         image_urls=urls,
         is_active=product.is_active,
@@ -65,6 +66,7 @@ class ProductCreate(BaseModel):
     price: float
     category: Optional[str] = None
     filament_type: Optional[str] = None
+    color: Optional[str] = None
     image_url: Optional[str] = None
     image_urls: List[str] = []
     is_active: bool = True
@@ -83,6 +85,7 @@ class ProductUpdate(BaseModel):
     price: Optional[float] = None
     category: Optional[str] = None
     filament_type: Optional[str] = None
+    color: Optional[str] = None
     image_url: Optional[str] = None
     image_urls: Optional[List[str]] = None
     is_active: Optional[bool] = None
@@ -95,6 +98,7 @@ class ProductResponse(BaseModel):
     price: float
     category: Optional[str] = None
     filament_type: Optional[str] = None
+    color: Optional[str] = None
     image_url: Optional[str] = None
     image_urls: List[str] = []
     is_active: bool
