@@ -509,16 +509,21 @@ export default function AdminProductsPage() {
         <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
           <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             {/* Background overlay */}
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={closeModal}></div>
+            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" aria-hidden="true" onClick={closeModal}></div>
 
             <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
-            <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl w-full">
+            <div className="inline-block align-bottom bg-white rounded-2xl text-left shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl w-full ring-1 ring-slate-200">
               <form onSubmit={handleSubmit}>
-                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  <h3 className="text-lg leading-6 font-bold text-gray-900 mb-6" id="modal-title">
-                    {editingProduct ? 'Ürünü Düzenle' : 'Yeni Ürün Ekle'}
-                  </h3>
+                <div className="bg-white px-6 pt-6 pb-6 sm:p-8 rounded-t-2xl">
+                  <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
+                    <h3 className="text-xl leading-6 font-bold text-slate-800" id="modal-title">
+                      {editingProduct ? 'Ürünü Düzenle' : 'Yeni Ürün Ekle'}
+                    </h3>
+                    <button type="button" onClick={closeModal} className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-md hover:bg-slate-100">
+                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                  </div>
                   
                   <div className="space-y-4">
                     <div>
@@ -569,7 +574,21 @@ export default function AdminProductsPage() {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Renk</label>
-                        <input type="text" name="color" placeholder="Örn: Siyah, Neon Orange" value={formData.color} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500" />
+                        <select name="color" value={formData.color} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 bg-white">
+                          <option value="">Seçiniz...</option>
+                          <option value="Siyah">Siyah</option>
+                          <option value="Beyaz">Beyaz</option>
+                          <option value="Gri">Gri</option>
+                          <option value="Kırmızı">Kırmızı</option>
+                          <option value="Mavi">Mavi</option>
+                          <option value="Yeşil">Yeşil</option>
+                          <option value="Sarı">Sarı</option>
+                          <option value="Turuncu">Turuncu</option>
+                          <option value="Pembe">Pembe</option>
+                          <option value="Şeffaf">Şeffaf</option>
+                          <option value="Çok Renkli">Çok Renkli</option>
+                          <option value="Diğer">Diğer</option>
+                        </select>
                       </div>
                       <div className="flex items-center mt-6">
                         <input type="checkbox" name="is_active" id="is_active" checked={formData.is_active} onChange={handleChange} className="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded" />
@@ -626,15 +645,15 @@ export default function AdminProductsPage() {
                   </div>
                 </div>
                 
-                <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-200">
+                <div className="bg-slate-50 px-6 py-4 sm:flex sm:flex-row-reverse border-t border-slate-100 rounded-b-2xl">
                   <button
                     type="submit"
                     disabled={saving || uploadingImage || isCropping || cropModalOpen}
-                    className="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-orange-500 text-base font-medium text-white hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors disabled:opacity-50"
+                    className="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-6 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 text-base font-medium text-white hover:from-orange-600 hover:to-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 sm:ml-3 sm:w-auto sm:text-sm transition-all disabled:opacity-50"
                   >
-                    {uploadingImage ? "Görsel yükleniyor..." : saving ? "Kaydediliyor..." : "Kaydet"}
+                    {uploadingImage ? "Görsel yükleniyor..." : saving ? "Kaydediliyor..." : editingProduct ? "Değişiklikleri Kaydet" : "Ürünü Ekle"}
                   </button>
-                  <button type="button" onClick={closeModal} className="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
+                  <button type="button" onClick={closeModal} className="mt-3 w-full inline-flex justify-center rounded-xl border border-slate-300 shadow-sm px-6 py-2.5 bg-white text-base font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-all">
                     İptal
                   </button>
                 </div>
