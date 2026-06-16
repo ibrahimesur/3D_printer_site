@@ -67,6 +67,21 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const handleCancelOrder = async () => {
+    if (!selectedOrderId) return;
+    if (!window.confirm("Bu siparişi tamamen iptal etmek istediğinize emin misiniz?")) return;
+    setIsSubmitting(true);
+    try {
+      await api.cancelAdminOrder(selectedOrderId);
+      await fetchData(); // Refresh list
+      setReassignModalOpen(false);
+    } catch (err: any) {
+      alert("İptal işlemi sırasında hata oluştu: " + err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -150,10 +165,12 @@ export default function AdminOrdersPage() {
                     ${order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                       order.status === 'printing' ? 'bg-blue-100 text-blue-800' :
                         order.status === 'accepted' ? 'bg-indigo-100 text-indigo-800' :
-                          'bg-green-100 text-green-800'}`}>
+                          order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                            'bg-green-100 text-green-800'}`}>
                     {order.status === 'pending' ? 'Bekliyor' :
                       order.status === 'printing' ? 'Üretimde' :
-                        order.status === 'accepted' ? 'Kabul Edildi' : order.status}
+                        order.status === 'accepted' ? 'Kabul Edildi' :
+                          order.status === 'cancelled' ? 'İptal Edildi' : order.status}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -236,6 +253,26 @@ export default function AdminOrdersPage() {
                       className="w-full bg-amber-100 hover:bg-amber-200 text-amber-800 font-medium py-2 px-4 rounded-lg transition-colors border border-amber-200 disabled:opacity-50"
                     >
                       Havuza Gönder (Atamayı Kaldır)
+                    </button>
+                  </div>
+
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                      <div className="w-full border-t border-red-200"></div>
+                    </div>
+                    <div className="relative flex justify-center">
+                      <span className="px-2 bg-white text-sm text-red-500">TEHLİKELİ BÖLGE</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <button
+                      type="button"
+                      disabled={isSubmitting}
+                      onClick={handleCancelOrder}
+                      className="w-full bg-red-100 hover:bg-red-200 text-red-800 font-medium py-2 px-4 rounded-lg transition-colors border border-red-200 disabled:opacity-50"
+                    >
+                      Siparişi Tamamen İptal Et
                     </button>
                   </div>
                 </div>

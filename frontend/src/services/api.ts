@@ -186,6 +186,12 @@ class ApiClient {
     });
   }
 
+  async cancelAdminOrder(orderId: number) {
+    return this.request(`/admin/orders/${orderId}/cancel`, {
+      method: "PATCH",
+    });
+  }
+
   async getAdminPendingDesigns() {
     return this.request("/admin/designs/pending");
   }
