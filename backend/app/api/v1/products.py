@@ -47,13 +47,19 @@ def product_to_response(product: Product) -> "ProductResponse":
         urls = [product.image_url]
     
     file_3d_urls = []
+    creator_id = None
+    creator_email = None
     if product.design_id:
         from app.models.design import Design
         from app.db.session import SessionLocal
         with SessionLocal() as db:
             design = db.query(Design).filter(Design.id == product.design_id).first()
-            if design and design.file_3d_urls:
-                file_3d_urls = list(design.file_3d_urls)
+            if design:
+                if design.file_3d_urls:
+                    file_3d_urls = list(design.file_3d_urls)
+                creator_id = design.creator_id
+                if design.creator:
+                    creator_email = design.creator.email
 
     return ProductResponse(
         id=product.id,
@@ -67,6 +73,8 @@ def product_to_response(product: Product) -> "ProductResponse":
         image_urls=urls,
         file_3d_urls=file_3d_urls,
         is_active=product.is_active,
+        creator_id=creator_id,
+        creator_email=creator_email
     )
 
 
@@ -116,6 +124,8 @@ class ProductResponse(BaseModel):
     image_urls: List[str] = []
     file_3d_urls: List[str] = []
     is_active: bool
+    creator_id: Optional[int] = None
+    creator_email: Optional[str] = None
 
     class Config:
         from_attributes = True
