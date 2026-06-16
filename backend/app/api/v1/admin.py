@@ -113,6 +113,26 @@ async def reassign_order(
     return {"message": "Sipariş ataması güncellendi", "status": order.status, "producer_id": order.producer_id}
 
 
+@router.patch("/orders/{id}/cancel")
+async def cancel_order(
+    id: int,
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_admin_user)
+):
+    """Adminin siparişi iptal etmesini sağlar."""
+    from fastapi import HTTPException
+    from app.models.order import OrderStatus
+    
+    order = db.query(Order).filter(Order.id == id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Sipariş bulunamadı")
+        
+    order.status = OrderStatus.CANCELLED
+    order.producer_id = None
+    db.commit()
+    return {"message": "Sipariş iptal edildi", "status": order.status}
+
+
 @router.get("/designs/pending")
 async def get_pending_designs(
     db: Session = Depends(get_db),
