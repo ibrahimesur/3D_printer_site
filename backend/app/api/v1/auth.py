@@ -47,6 +47,11 @@ class ResetPasswordRequest(BaseModel):
     new_password: str
 
 
+class ChangePasswordRequest(BaseModel):
+    old_password: str
+    new_password: str
+
+
 # ── Endpoints ─────────────────────────────────────────────────
 @router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
 async def register(data: UserRegister, db: Session = Depends(get_db)):
@@ -166,4 +171,19 @@ async def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_d
     user.hashed_password = get_password_hash(data.new_password)
     db.commit()
 
+    return {"message": "Şifreniz başarıyla güncellendi."}
+
+
+@router.post("/change-password")
+async def change_password(data: ChangePasswordRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Oturum açmış kullanıcının şifresini değiştirir."""
+    if not verify_password(data.old_password, current_user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Mevcut şifre hatalı.",
+        )
+    
+    current_user.hashed_password = get_password_hash(data.new_password)
+    db.commit()
+    
     return {"message": "Şifreniz başarıyla güncellendi."}

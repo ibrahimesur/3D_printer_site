@@ -89,6 +89,13 @@ class ApiClient {
     });
   }
 
+  async changePassword(oldPassword: string, newPassword: string) {
+    return this.request("/auth/change-password", {
+      method: "POST",
+      body: { old_password: oldPassword, new_password: newPassword },
+    });
+  }
+
   // ── Orders ───────────────────────────────────────────────
   async checkout(items: any[]) {
     return this.request("/orders/checkout", {
