@@ -1,6 +1,8 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.requests import Request
 from fastapi.staticfiles import StaticFiles
 
 from contextlib import asynccontextmanager
@@ -64,6 +66,17 @@ app.add_middleware(
 
 # ── Include API Routers ──────────────────────────────────────
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    import traceback
+    err_msg = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
+    print(f"Global Error Handled: {err_msg}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal Server Error", "traceback": err_msg},
+        headers={"Access-Control-Allow-Origin": "*"}
+    )
 
 # ── Serve uploaded files ─────────────────────────────────────
 uploads_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "uploads")

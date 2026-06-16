@@ -168,8 +168,14 @@ export default function ProducerDesignsPage() {
       });
 
       if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.detail || "Tasarım yüklenemedi");
+        let errStr = "Tasarım yüklenemedi";
+        try {
+          const err = await response.json();
+          errStr = err.traceback ? `${err.detail}\n${err.traceback}` : err.detail || errStr;
+        } catch (e) {
+          errStr = response.statusText;
+        }
+        throw new Error(errStr);
       }
 
       setSubmitMessage("Tasarımınız başarıyla yüklendi! Admin onayı bekleniyor.");
