@@ -45,6 +45,22 @@ def product_to_response(product: Product) -> "ProductResponse":
     urls = list(product.image_urls or [])
     if not urls and product.image_url:
         urls = [product.image_url]
+    
+    file_3d_urls = []
+    creator_id = None
+    creator_email = None
+    if product.design_id:
+        from app.models.design import Design
+        from app.db.session import SessionLocal
+        with SessionLocal() as db:
+            design = db.query(Design).filter(Design.id == product.design_id).first()
+            if design:
+                if design.file_3d_urls:
+                    file_3d_urls = list(design.file_3d_urls)
+                creator_id = design.creator_id
+                if design.creator:
+                    creator_email = design.creator.email
+
     return ProductResponse(
         id=product.id,
         title=product.title,
@@ -52,9 +68,13 @@ def product_to_response(product: Product) -> "ProductResponse":
         price=product.price,
         category=product.category,
         filament_type=product.filament_type,
+        color=product.color,
         image_url=urls[0] if urls else product.image_url,
         image_urls=urls,
+        file_3d_urls=file_3d_urls,
         is_active=product.is_active,
+        creator_id=creator_id,
+        creator_email=creator_email
     )
 
 
@@ -65,8 +85,10 @@ class ProductCreate(BaseModel):
     price: float
     category: Optional[str] = None
     filament_type: Optional[str] = None
+    color: Optional[str] = None
     image_url: Optional[str] = None
     image_urls: List[str] = []
+    file_3d_urls: List[str] = []
     is_active: bool = True
 
     @field_validator("image_urls", mode="before")
@@ -83,8 +105,10 @@ class ProductUpdate(BaseModel):
     price: Optional[float] = None
     category: Optional[str] = None
     filament_type: Optional[str] = None
+    color: Optional[str] = None
     image_url: Optional[str] = None
     image_urls: Optional[List[str]] = None
+    file_3d_urls: Optional[List[str]] = None
     is_active: Optional[bool] = None
 
 
@@ -95,9 +119,13 @@ class ProductResponse(BaseModel):
     price: float
     category: Optional[str] = None
     filament_type: Optional[str] = None
+    color: Optional[str] = None
     image_url: Optional[str] = None
     image_urls: List[str] = []
+    file_3d_urls: List[str] = []
     is_active: bool
+    creator_id: Optional[int] = None
+    creator_email: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -110,9 +138,31 @@ def create_product(product: ProductCreate, db: Session = Depends(get_db), curren
     product_data = normalize_image_fields(product.model_dump())
     image_urls = product_data.pop("image_urls", [])
     image_url = product_data.pop("image_url", None)
+    file_3d_urls = product_data.pop("file_3d_urls", [])
+
+    design_id = None
+    if file_3d_urls:
+        from app.models.design import Design
+        new_design = Design(
+            title=product.title,
+            description=product.description,
+            suggested_price=product.price,
+            image_urls=image_urls,
+            file_3d_urls=file_3d_urls,
+            creator_id=current_admin.id,
+            is_approved=True,
+            category=product.category,
+            filament_type=product.filament_type,
+            color=product.color
+        )
+        db.add(new_design)
+        db.flush()
+        design_id = new_design.id
+
     db_product = Product(**product_data)
     db_product.image_urls = image_urls
     db_product.image_url = image_url
+    db_product.design_id = design_id
     db.add(db_product)
     db.commit()
     db.refresh(db_product)
@@ -134,6 +184,31 @@ def update_product(id: int, product: ProductUpdate, db: Session = Depends(get_db
         for k in ("image_urls", "image_url")
         if k in update_data
     }
+
+    if "file_3d_urls" in update_data:
+        file_3d_urls = update_data.pop("file_3d_urls")
+        if db_product.design_id:
+            from app.models.design import Design
+            design = db.query(Design).filter(Design.id == db_product.design_id).first()
+            if design:
+                design.file_3d_urls = file_3d_urls
+        elif file_3d_urls:
+            from app.models.design import Design
+            new_design = Design(
+                title=db_product.title,
+                description=db_product.description,
+                suggested_price=db_product.price,
+                image_urls=db_product.image_urls,
+                file_3d_urls=file_3d_urls,
+                creator_id=current_admin.id,
+                is_approved=True,
+                category=db_product.category,
+                filament_type=db_product.filament_type,
+                color=db_product.color
+            )
+            db.add(new_design)
+            db.flush()
+            db_product.design_id = new_design.id
 
     # Find removed images to delete from Supabase
     if "image_urls" in image_payload:
@@ -186,9 +261,18 @@ def delete_product(id: int, db: Session = Depends(get_db), current_admin = Depen
         except Exception as e:
             print(f"Failed to delete product files from Supabase: {e}")
 
-        db.delete(db_product)
-        db.commit()
-        return {"message": "Ürün ve ilgili dosyaları kalıcı olarak silindi"}
+        try:
+            db.delete(db_product)
+            db.commit()
+            return {"message": "Ürün ve ilgili dosyaları kalıcı olarak silindi"}
+        except Exception as e:
+            db.rollback()
+            if "ForeignKeyViolation" in str(e) or "IntegrityError" in str(type(e)):
+                raise HTTPException(
+                    status_code=400, 
+                    detail="Bu ürün aktif siparişlerde veya sepetlerde bulunduğu için kalıcı olarak silinemez, pasif durumda kalması gereklidir."
+                )
+            raise HTTPException(status_code=500, detail="Ürün silinirken bir hata oluştu: " + str(e))
 
 
 @router.get("/admin/products", response_model=List[ProductResponse])

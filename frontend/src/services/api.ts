@@ -1,3 +1,5 @@
+import { useAuthStore } from "@/store/useAuthStore";
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api/v1";
 
 interface RequestOptions {
@@ -49,6 +51,11 @@ class ApiClient {
     });
 
     if (!response.ok) {
+      if (response.status === 401) {
+        if (typeof window !== "undefined") {
+          useAuthStore.getState().logout();
+        }
+      }
       const error = await response.json().catch(() => ({ detail: "Bir hata oluştu" }));
       throw new Error(error.detail || `HTTP ${response.status}`);
     }
@@ -144,6 +151,12 @@ class ApiClient {
     });
   }
 
+  async mockCreateOrder() {
+    return this.request("/orders/mock-create", {
+      method: "POST",
+    });
+  }
+
   // ── Pricing ──────────────────────────────────────────────
   async estimatePrice(stlFileUrl: string, filamentType: string = "PLA", infill: number = 20) {
     return this.request("/pricing/estimate", {
@@ -165,8 +178,25 @@ class ApiClient {
     return this.request("/admin/users");
   }
 
+  async getAdminUserPrinters(userId: number) {
+    return this.request(`/admin/users/${userId}/printers`);
+  }
+
   async getAdminOrders() {
     return this.request("/admin/orders");
+  }
+
+  async reassignAdminOrder(orderId: number, producerId: number | null) {
+    return this.request(`/admin/orders/${orderId}/reassign`, {
+      method: "PATCH",
+      body: { producer_id: producerId },
+    });
+  }
+
+  async cancelAdminOrder(orderId: number) {
+    return this.request(`/admin/orders/${orderId}/cancel`, {
+      method: "PATCH",
+    });
   }
 
   async getAdminPendingDesigns() {
@@ -258,6 +288,25 @@ class ApiClient {
 
   async removeFavorite(productId: number) {
     return this.request(`/favorites/${productId}`, { method: "DELETE" });
+  }
+
+  // ── Secure Print Streaming ───────────────────────────────
+  async startSecurePrintJob(jobId: number, gcodePath?: string) {
+    return this.request(`/producer/jobs/${jobId}/start`, {
+      method: "POST",
+      body: { gcode_path: gcodePath },
+    });
+  }
+
+  async getSecurePrintJobStatus(jobId: number) {
+    return this.request(`/producer/jobs/${jobId}/status`);
+  }
+
+  async setupPrinter(data: any) {
+    return this.request("/producer/printers/setup", {
+      method: "PUT",
+      body: data,
+    });
   }
 }
 

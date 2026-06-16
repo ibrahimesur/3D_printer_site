@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, DragEvent } from "react";
 import Button from "@/components/common/Button";
 import api from "@/services/api";
 import { useAuthStore } from "@/store/useAuthStore";
+import { supabase } from "@/utils/supabase";
 
 interface Design {
   id: number;
@@ -35,6 +36,19 @@ export default function ProducerDesignsPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [suggestedPrice, setSuggestedPrice] = useState("");
+  const [category, setCategory] = useState("");
+  const [filamentType, setFilamentType] = useState("");
+  const [color, setColor] = useState("");
+
+  const CATEGORIES = [
+    "Figür & Karakter",
+    "Dekoratif Ürünler",
+    "Yedek Parça",
+    "Maket & Hobi",
+    "Aksesuar",
+    "Filamentler",
+    "Dünya Kupası 2026"
+  ];
 
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [file3dFiles, setFile3dFiles] = useState<File[]>([]);
@@ -45,7 +59,14 @@ export default function ProducerDesignsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const file3dInputRef = useRef<HTMLInputElement>(null);
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001";
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api/v1";
+  const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:8001';
+
+  function resolveFileUrl(url: string | null | undefined): string | null {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    return `${BACKEND_URL}${url}`;
+  }
 
   useEffect(() => {
     fetchDesigns();
@@ -56,7 +77,7 @@ export default function ProducerDesignsPage() {
     try {
       setLoading(true);
       const token = useAuthStore.getState().token;
-      const response = await fetch(`${API_BASE}/api/v1/producer/designs`, {
+      const response = await fetch(`${API_URL}/producer/designs`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) throw new Error("Tasarımlar alınamadı");
@@ -72,7 +93,7 @@ export default function ProducerDesignsPage() {
   const fetchStats = async () => {
     try {
       const token = useAuthStore.getState().token;
-      const response = await fetch(`${API_BASE}/api/v1/producer/designs/stats`, {
+      const response = await fetch(`${API_URL}/producer/designs/stats`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) throw new Error("İstatistikler alınamadı");
@@ -90,36 +111,80 @@ export default function ProducerDesignsPage() {
 
     try {
       const token = useAuthStore.getState().token;
-      const formData = new FormData();
-      formData.append("title", title);
-      formData.append("description", description);
-      formData.append("suggested_price", suggestedPrice || "0");
+      
+      const uploadedImageUrls: string[] = [];
+      const uploaded3dUrls: string[] = [];
 
-      imageFiles.forEach((file) => {
-        formData.append("images", file);
-      });
-
-      if (file3dFiles.length > 0) {
-        file3dFiles.forEach((file) => {
-          formData.append("files_3d", file);
-        });
+      // 1. Upload Images to Supabase
+      for (const file of imageFiles) {
+        const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+        const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${ext}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('product-images')
+          .upload(fileName, file);
+          
+        if (uploadError) throw new Error("Görsel yüklenirken hata: " + uploadError.message);
+        
+        const { data } = supabase.storage.from('product-images').getPublicUrl(fileName);
+        uploadedImageUrls.push(data.publicUrl);
       }
 
-      const response = await fetch(`${API_BASE}/api/v1/producer/designs/`, {
+      // 2. Upload 3D files to Supabase
+      for (const file of file3dFiles) {
+        const ext = file.name.split('.').pop()?.toLowerCase() || 'stl';
+        const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${ext}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('product-stls')
+          .upload(fileName, file);
+          
+        if (uploadError) throw new Error("3D dosya yüklenirken hata: " + uploadError.message);
+        
+        // We only save the filename for STLs for consistency, but publicUrl works too. Let's use publicUrl.
+        const { data } = supabase.storage.from('product-stls').getPublicUrl(fileName);
+        uploaded3dUrls.push(data.publicUrl);
+      }
+
+      // 3. Send JSON to backend
+      const payload = {
+        title,
+        description,
+        suggested_price: parseFloat(suggestedPrice || "0"),
+        category,
+        filament_type: filamentType,
+        color,
+        image_urls: uploadedImageUrls,
+        file_3d_urls: uploaded3dUrls
+      };
+
+      const response = await fetch(`${API_URL}/producer/designs/`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.detail || "Tasarım yüklenemedi");
+        let errStr = "Tasarım yüklenemedi";
+        try {
+          const err = await response.json();
+          errStr = err.traceback ? `${err.detail}\n${err.traceback}` : err.detail || errStr;
+        } catch (e) {
+          errStr = response.statusText;
+        }
+        throw new Error(errStr);
       }
 
       setSubmitMessage("Tasarımınız başarıyla yüklendi! Admin onayı bekleniyor.");
       setTitle("");
       setDescription("");
       setSuggestedPrice("");
+      setCategory("");
+      setFilamentType("");
+      setColor("");
 
       setImageFiles([]);
       setFile3dFiles([]);
@@ -260,6 +325,47 @@ export default function ProducerDesignsPage() {
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors resize-none"
                   placeholder="Tasarımınızı kısaca açıklayın..."
                 />
+              </div>
+
+              {/* Attributes (Category, Filament, Color) */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Kategori *</label>
+                  <select required value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors bg-white">
+                    <option value="">Seçiniz...</option>
+                    {CATEGORIES.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Filament Türü</label>
+                  <select value={filamentType} onChange={(e) => setFilamentType(e.target.value)} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors bg-white">
+                    <option value="">Seçiniz...</option>
+                    <option value="PLA">PLA</option>
+                    <option value="PETG">PETG</option>
+                    <option value="ABS">ABS</option>
+                    <option value="TPU">TPU (Esnek)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Renk</label>
+                  <select value={color} onChange={(e) => setColor(e.target.value)} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors bg-white">
+                    <option value="">Seçiniz...</option>
+                    <option value="Siyah">Siyah</option>
+                    <option value="Beyaz">Beyaz</option>
+                    <option value="Gri">Gri</option>
+                    <option value="Kırmızı">Kırmızı</option>
+                    <option value="Mavi">Mavi</option>
+                    <option value="Yeşil">Yeşil</option>
+                    <option value="Sarı">Sarı</option>
+                    <option value="Turuncu">Turuncu</option>
+                    <option value="Pembe">Pembe</option>
+                    <option value="Şeffaf">Şeffaf</option>
+                    <option value="Çok Renkli">Çok Renkli</option>
+                    <option value="Diğer">Diğer</option>
+                  </select>
+                </div>
               </div>
 
               {/* Two upload areas side by side */}
@@ -468,7 +574,7 @@ export default function ProducerDesignsPage() {
                       <td className="px-6 py-4">
                         {design.image_urls.length > 0 ? (
                           <img
-                            src={`${API_BASE}${design.image_urls[0]}`}
+                            src={resolveFileUrl(design.image_urls[0]) || ""}
                             alt={design.title}
                             className="w-14 h-14 object-cover rounded-lg border border-gray-200"
                           />

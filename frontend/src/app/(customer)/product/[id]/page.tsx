@@ -289,8 +289,8 @@ export default function ProductDetailPage() {
   const selectedImage = images[selectedImageIndex];
 
   return (
-    <div className="min-h-screen bg-background pb-20 pt-12">
-      <div className="mx-auto max-w-6xl px-4 pb-4">
+    <div className="min-h-screen bg-background pb-24 sm:pb-20 pt-8 sm:pt-12">
+      <div className="mx-auto max-w-6xl px-3 sm:px-4 pb-4">
         <nav className="flex items-center gap-2 text-sm text-text-muted">
           <Link href="/" className="transition-colors hover:text-primary">
             Ana Sayfa
@@ -300,11 +300,11 @@ export default function ProductDetailPage() {
         </nav>
       </div>
 
-      <div className="mx-auto max-w-6xl space-y-10 px-4">
+      <div className="mx-auto max-w-6xl space-y-6 sm:space-y-10 px-3 sm:px-4">
         {/* Hero */}
-        <div className="overflow-hidden rounded-3xl border border-border bg-surface shadow-sm">
+        <div className="overflow-hidden rounded-2xl sm:rounded-3xl border border-border bg-surface shadow-sm">
           <div className="grid lg:grid-cols-2">
-            <div className="relative flex min-h-[420px] flex-col items-center justify-center bg-surface p-6 lg:min-h-[520px]">
+            <div className="relative flex min-h-[280px] sm:min-h-[420px] flex-col items-center justify-center bg-surface p-4 sm:p-6 lg:min-h-[520px]">
               {selectedImage ? (
                 <div className="relative z-10 flex w-full max-w-md flex-col items-center gap-4">
                   <button
@@ -362,7 +362,7 @@ export default function ProductDetailPage() {
               )}
             </div>
 
-            <div className="flex flex-col justify-center gap-8 p-8 lg:p-12">
+            <div className="flex flex-col justify-center gap-5 sm:gap-8 p-5 sm:p-8 lg:p-12">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-primary">
                   {product.category || "Genel Kategori"}
@@ -375,7 +375,7 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              <h1 className="text-4xl font-extrabold leading-snug tracking-tight text-text-main lg:text-5xl">
+              <h1 className="text-2xl sm:text-4xl font-extrabold leading-snug tracking-tight text-text-main lg:text-5xl">
                 {product.title}
               </h1>
 
@@ -384,7 +384,7 @@ export default function ProductDetailPage() {
                   Satış Fiyatı
                 </span>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-black text-text-main lg:text-5xl">
+                  <span className="text-3xl sm:text-4xl font-black text-text-main lg:text-5xl">
                     ₺{product.price.toFixed(2)}
                   </span>
                   <span className="text-sm text-text-muted">/ adet</span>

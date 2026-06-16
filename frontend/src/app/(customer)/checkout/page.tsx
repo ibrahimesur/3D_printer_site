@@ -6,7 +6,8 @@ import { useCartStore } from "@/store/useCartStore";
 import api from "@/services/api";
 
 export default function CheckoutPage() {
-  const { items, totalPrice, clearCart } = useCartStore();
+  const { items, clearCart } = useCartStore();
+  const totalPrice = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -14,7 +15,7 @@ export default function CheckoutPage() {
 
   const handleCheckout = async () => {
     if (items.length === 0) return;
-    
+
     setLoading(true);
     setError(null);
     try {
@@ -39,12 +40,20 @@ export default function CheckoutPage() {
           </div>
           <h2 className="text-3xl font-extrabold text-gray-900 mb-3">Siparişiniz Alındı!</h2>
           <p className="text-gray-500 mb-8 text-lg">Siparişiniz başarıyla oluşturuldu ve üretici havuzuna eklendi.</p>
-          <button
-            onClick={() => router.push("/")}
-            className="w-full py-4 px-4 border border-transparent rounded-xl shadow-sm text-lg font-medium text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all transform hover:-translate-y-1"
-          >
-            Alışverişe Dön
-          </button>
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => router.push("/dashboard")}
+              className="w-full py-4 px-4 border border-transparent rounded-xl shadow-sm text-lg font-bold text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all transform hover:-translate-y-1"
+            >
+              Üretici Paneline Git (İşi Al)
+            </button>
+            <button
+              onClick={() => router.push("/")}
+              className="w-full py-3 px-4 border border-gray-200 rounded-xl text-base font-medium text-gray-600 hover:bg-gray-50 focus:outline-none transition-all"
+            >
+              Alışverişe Dön
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -53,7 +62,7 @@ export default function CheckoutPage() {
   return (
     <div className="max-w-5xl mx-auto px-4 py-12 sm:px-6 lg:px-8 min-h-screen">
       <h1 className="text-3xl font-bold text-gray-900 mb-8">Ödeme Sayfası</h1>
-      
+
       <div className="bg-white rounded-2xl shadow-md overflow-hidden flex flex-col lg:flex-row border border-gray-100">
         {/* Cart Summary */}
         <div className="p-8 lg:w-2/3 border-b lg:border-b-0 lg:border-r border-gray-100">
@@ -100,7 +109,7 @@ export default function CheckoutPage() {
               {totalPrice.toFixed(2)} <span className="text-3xl text-gray-500 font-medium">₺</span>
             </div>
             <p className="text-sm text-gray-500 mb-8">KDV ve Kargo dahildir.</p>
-            
+
             {error && (
               <div className="p-4 mb-6 text-sm text-red-700 bg-red-100 rounded-xl border border-red-200">
                 {error}
@@ -111,11 +120,10 @@ export default function CheckoutPage() {
           <button
             onClick={handleCheckout}
             disabled={loading || items.length === 0}
-            className={`w-full py-4 px-4 rounded-xl shadow-md text-lg font-bold text-white transition-all transform hover:-translate-y-1 flex items-center justify-center ${
-              loading || items.length === 0
+            className={`w-full py-4 px-4 rounded-xl shadow-md text-lg font-bold text-white transition-all transform hover:-translate-y-1 flex items-center justify-center ${loading || items.length === 0
                 ? "bg-gray-300 cursor-not-allowed"
                 : "bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
-            }`}
+              }`}
           >
             {loading ? (
               <>

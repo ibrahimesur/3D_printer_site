@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
 import api from "@/services/api";
+import Link from "next/link";
 
 interface UserData {
   id: number;
@@ -35,8 +36,8 @@ export default function AdminDashboard() {
           api.getAdminOrders()
         ]);
 
-        setUsers(usersData);
-        setOrders(ordersData);
+        setUsers(usersData as UserData[]);
+        setOrders(ordersData as OrderData[]);
       } catch (error) {
         console.error("Veri çekme hatası:", error);
       } finally {
@@ -64,9 +65,23 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Sistem Özeti</h1>
-        <p className="mt-2 text-sm text-gray-600">Platformun genel durumunu buradan takip edebilirsiniz.</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Sistem Özeti</h1>
+          <p className="mt-2 text-sm text-gray-600">Platformun genel durumunu buradan takip edebilirsiniz.</p>
+        </div>
+        <div>
+          <Link
+            href="/producer/onboarding"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium shadow-sm transition-colors text-sm"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Yazıcı Kurulumu / Ayarları
+          </Link>
+        </div>
       </div>
 
       {/* Stats Cards */}
