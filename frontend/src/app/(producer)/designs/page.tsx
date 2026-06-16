@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, DragEvent } from "react";
 import Button from "@/components/common/Button";
 import api from "@/services/api";
 import { useAuthStore } from "@/store/useAuthStore";
+import { supabase } from "@/utils/supabase";
 
 interface Design {
   id: number;
@@ -110,28 +111,60 @@ export default function ProducerDesignsPage() {
 
     try {
       const token = useAuthStore.getState().token;
-      const formData = new FormData();
-      formData.append("title", title);
-      formData.append("description", description);
-      formData.append("suggested_price", suggestedPrice || "0");
-      formData.append("category", category);
-      formData.append("filament_type", filamentType);
-      formData.append("color", color);
+      
+      const uploadedImageUrls: string[] = [];
+      const uploaded3dUrls: string[] = [];
 
-      imageFiles.forEach((file) => {
-        formData.append("images", file);
-      });
-
-      if (file3dFiles.length > 0) {
-        file3dFiles.forEach((file) => {
-          formData.append("files_3d", file);
-        });
+      // 1. Upload Images to Supabase
+      for (const file of imageFiles) {
+        const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+        const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${ext}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('product-images')
+          .upload(fileName, file);
+          
+        if (uploadError) throw new Error("Görsel yüklenirken hata: " + uploadError.message);
+        
+        const { data } = supabase.storage.from('product-images').getPublicUrl(fileName);
+        uploadedImageUrls.push(data.publicUrl);
       }
+
+      // 2. Upload 3D files to Supabase
+      for (const file of file3dFiles) {
+        const ext = file.name.split('.').pop()?.toLowerCase() || 'stl';
+        const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${ext}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('product-stls')
+          .upload(fileName, file);
+          
+        if (uploadError) throw new Error("3D dosya yüklenirken hata: " + uploadError.message);
+        
+        // We only save the filename for STLs for consistency, but publicUrl works too. Let's use publicUrl.
+        const { data } = supabase.storage.from('product-stls').getPublicUrl(fileName);
+        uploaded3dUrls.push(data.publicUrl);
+      }
+
+      // 3. Send JSON to backend
+      const payload = {
+        title,
+        description,
+        suggested_price: parseFloat(suggestedPrice || "0"),
+        category,
+        filament_type: filamentType,
+        color,
+        image_urls: uploadedImageUrls,
+        file_3d_urls: uploaded3dUrls
+      };
 
       const response = await fetch(`${API_URL}/producer/designs/`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
