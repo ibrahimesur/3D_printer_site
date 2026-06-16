@@ -60,8 +60,11 @@ async def get_all_orders(
         {
             "id": order.id,
             "customer_id": order.customer_id,
+            "customer_email": order.customer.email if order.customer else None,
             "producer_id": order.producer_id,
+            "producer_email": order.producer.email if order.producer else None,
             "product_id": order.product_id,
+            "product_title": order.product.title if order.product else "Bilinmeyen Ürün",
             "quantity": order.quantity,
             "status": order.status,
             "total_price": order.total_price,
@@ -69,6 +72,45 @@ async def get_all_orders(
         }
         for order in orders
     ]
+
+
+from pydantic import BaseModel
+from typing import Optional
+
+class ReassignOrderRequest(BaseModel):
+    producer_id: Optional[int] = None
+
+@router.patch("/orders/{id}/reassign")
+async def reassign_order(
+    id: int,
+    request: ReassignOrderRequest,
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_admin_user)
+):
+    """Adminin siparişi başka bir üreticiye atamasını veya havuza geri göndermesini sağlar."""
+    from fastapi import HTTPException
+    from app.models.order import OrderStatus
+    
+    order = db.query(Order).filter(Order.id == id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Sipariş bulunamadı")
+        
+    if request.producer_id is None:
+        # Havuza geri at
+        order.producer_id = None
+        order.status = OrderStatus.PENDING
+    else:
+        # Başka bir üreticiye ata
+        # İsteğe bağlı olarak üreticinin var olup olmadığını kontrol edebilirsiniz
+        producer = db.query(User).filter(User.id == request.producer_id, User.role == "producer").first()
+        if not producer:
+            raise HTTPException(status_code=400, detail="Geçerli bir üretici (producer) seçmelisiniz.")
+            
+        order.producer_id = request.producer_id
+        order.status = OrderStatus.ACCEPTED
+
+    db.commit()
+    return {"message": "Sipariş ataması güncellendi", "status": order.status, "producer_id": order.producer_id}
 
 
 @router.get("/designs/pending")
