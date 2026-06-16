@@ -74,49 +74,6 @@ export default function ApplyProducerPage() {
   }
 
   return (
-<<<<<<< Updated upstream
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col md:flex-row border border-gray-100">
-        
-        {/* About Us / Why Produce for Us Section */}
-        <div className="md:w-1/2 bg-orange-50 p-8 md:p-12 flex flex-col justify-center border-r border-orange-100">
-          <Link href="/" className="inline-flex items-center gap-2 mb-8 group">
-            <img src="/printago.svg" alt="PrintAgo" className="w-8 h-8" />
-            <span className="text-2xl font-black tracking-tighter text-orange-500 lowercase">printago</span>
-          </Link>
-          
-          <h1 className="text-3xl font-bold text-gray-900 mb-6">Bizim İçin Üretim Yapın</h1>
-          
-          <div className="space-y-6 text-gray-600">
-            <p>
-              PrintAgo, 3D baskı teknolojisini herkes için erişilebilir kılan Türkiye'nin öncü pazaryeridir. Büyük bir müşteri ağına ulaşıyoruz ve bizimle birlikte büyüyecek yetenekli 3D yazıcı üreticilerini arıyoruz.
-            </p>
-            <div className="flex gap-4">
-              <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0 text-orange-500 shadow-sm">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900">Yazıcılarınızı Kazanca Dönüştürün</h3>
-                <p className="text-sm">Boşta duran 3D yazıcılarınızı üretime dahil edin; oturduğunuz yerden siparişleri kabul ederek ek gelir sağlamaya başlayın.</p>
-              </div>
-            </div>
-            <div className="flex gap-4">
-              <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0 text-orange-500 shadow-sm">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900">Hazır Müşteri ve Sipariş Ağı</h3>
-                <p className="text-sm">Pazarlama, reklam veya müşteri bulma süreçleriyle vakit kaybetmeyin. PrintAgo ile doğrudan baskı ihtiyacı olan binlerce müşteriye anında ulaşın.</p>
-              </div>
-            </div>
-            <div className="flex gap-4">
-              <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0 text-orange-500 shadow-sm">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900">Zamanında ve Güvenli Ödeme</h3>
-                <p className="text-sm">Tüm sipariş ve tahsilat süreçleri PrintAgo güvencesi altındadır. Tamamladığınız üretimlerin ödemelerini her hafta düzenli olarak banka hesabınızdan çekin.</p>
-=======
     <div className="min-h-screen bg-gray-50 py-8 md:py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
       <div className="max-w-6xl w-full bg-white rounded-3xl shadow-lg overflow-hidden flex flex-col md:flex-row border border-gray-100">
         
@@ -180,91 +137,58 @@ export default function ApplyProducerPage() {
               <div className="bg-white p-3 rounded-xl border border-orange-100 shadow-sm">
                 <span className="font-bold text-orange-500 block mb-1">4. Kazancı Al</span>
                 Kazancınız haftalık hesabınızda.
->>>>>>> Stashed changes
               </div>
             </div>
           </div>
         </div>
 
         {/* Application Form */}
-<<<<<<< Updated upstream
-        <div className="md:w-1/2 p-8 md:p-12">
-=======
         <div className="md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
->>>>>>> Stashed changes
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Üretici Başvuru Formu</h2>
           <p className="text-sm text-gray-500 mb-6">Formu doldurun, sizinle iletişime geçelim.</p>
 
           {status === "error" && (
-<<<<<<< Updated upstream
-            <div className="bg-red-50 text-red-500 p-4 rounded-lg text-sm mb-6 border border-red-100">
-=======
             <div className="bg-red-50 text-red-500 p-3 rounded-lg text-sm mb-6 border border-red-100">
->>>>>>> Stashed changes
               {errorMessage}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-<<<<<<< Updated upstream
-              <label className="block text-sm font-medium text-gray-700 mb-1">Ad Soyad</label>
-=======
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Ad Soyad</label>
->>>>>>> Stashed changes
               <input
                 type="text"
                 name="full_name"
                 required
                 value={formData.full_name}
                 onChange={handleChange}
-<<<<<<< Updated upstream
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors"
-=======
                 className="w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors"
->>>>>>> Stashed changes
                 placeholder="Örn: Ahmet Yılmaz"
               />
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
-<<<<<<< Updated upstream
-                <label className="block text-sm font-medium text-gray-700 mb-1">E-posta</label>
-=======
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">E-posta</label>
->>>>>>> Stashed changes
                 <input
                   type="email"
                   name="email"
                   required
                   value={formData.email}
                   onChange={handleChange}
-<<<<<<< Updated upstream
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors"
-=======
                   className="w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors"
->>>>>>> Stashed changes
                   placeholder="E-posta adresiniz"
                 />
               </div>
               <div>
-<<<<<<< Updated upstream
-                <label className="block text-sm font-medium text-gray-700 mb-1">Hesap Şifresi</label>
-=======
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Hesap Şifresi</label>
->>>>>>> Stashed changes
                 <input
                   type="password"
                   name="password"
                   required
                   value={formData.password}
                   onChange={handleChange}
-<<<<<<< Updated upstream
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors"
-=======
                   className="w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors"
->>>>>>> Stashed changes
                   placeholder="En az 6 karakter"
                   minLength={6}
                 />
@@ -272,39 +196,19 @@ export default function ApplyProducerPage() {
             </div>
 
             <div>
-<<<<<<< Updated upstream
-              <label className="block text-sm font-medium text-gray-700 mb-1">Sahip Olduğunuz Yazıcılar</label>
-=======
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Sahip Olduğunuz Yazıcılar</label>
->>>>>>> Stashed changes
               <textarea
                 name="printer_info"
                 required
                 rows={2}
                 value={formData.printer_info}
                 onChange={handleChange}
-<<<<<<< Updated upstream
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors resize-none"
-                placeholder="Örn: 2 adet Creality Ender 3 V2, 1 adet Anycubic Prusa i3 MK3S+"
-=======
                 className="w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors resize-none"
                 placeholder="Örn: 2 adet Creality Ender 3 V2..."
->>>>>>> Stashed changes
               ></textarea>
             </div>
 
             <div>
-<<<<<<< Updated upstream
-              <label className="block text-sm font-medium text-gray-700 mb-1">3D Baskı Tecrübeniz</label>
-              <textarea
-                name="experience"
-                required
-                rows={3}
-                value={formData.experience}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors resize-none"
-                placeholder="Ne zamandır baskı alıyorsunuz? Hangi materyallerle (PLA, ABS, PETG vb.) çalışıyorsunuz? Kısaca kendinizden bahsedin."
-=======
               <label className="block text-sm font-medium text-gray-700 mb-1.5">3D Baskı Tecrübeniz</label>
               <textarea
                 name="experience"
@@ -314,30 +218,20 @@ export default function ApplyProducerPage() {
                 onChange={handleChange}
                 className="w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors resize-none"
                 placeholder="Tecrübenizden ve çalıştığınız materyallerden bahsedin."
->>>>>>> Stashed changes
               ></textarea>
             </div>
 
             <Button
               type="submit"
               variant="primary"
-<<<<<<< Updated upstream
-              className="w-full justify-center py-3 text-base shadow-orange-500/20 shadow-lg mt-2"
-=======
               className="w-full justify-center py-3.5 text-base font-bold shadow-orange-500/20 shadow-lg mt-2"
->>>>>>> Stashed changes
               disabled={status === "loading"}
             >
               {status === "loading" ? "Gönderiliyor..." : "Başvurumu Gönder"}
             </Button>
             
-<<<<<<< Updated upstream
-            <p className="text-xs text-center text-gray-500 mt-4">
-              Zaten bir üretici misiniz? <Link href="/auth/login" className="text-orange-500 hover:underline">Giriş Yapın</Link>
-=======
             <p className="text-sm text-center text-gray-500 mt-4">
               Zaten bir üretici misiniz? <Link href="/auth/login" className="text-orange-500 hover:underline font-semibold">Giriş Yapın</Link>
->>>>>>> Stashed changes
             </p>
           </form>
         </div>

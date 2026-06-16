@@ -471,7 +471,7 @@ export default function ProductDetailPage() {
                 <p className="text-center text-xs text-text-muted">
                   Satıcı:{" "}
                   <span className="font-semibold text-text-main">
-                    Printago Partner
+                    Filamengo Partner
                   </span>{" "}
                   · Türkiye
                 </p>

@@ -56,10 +56,9 @@ export default function Navbar() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 gap-4">
-            {/* Logo with Link to Dashboard */}
             <Link href="/dashboard" className="flex items-center gap-3 flex-shrink-0 group">
-              <img src="/printago.svg" alt="PrintAgo Logo" className="h-12 w-12 object-contain transform group-hover:rotate-6 transition-transform duration-300" />
-              <span className="hidden sm:block text-3xl font-black tracking-tighter text-orange-500 lowercase group-hover:text-orange-600 transition-colors">printago</span>
+              <img src="/filamengo.png" alt="Filamengo Logo" className="h-12 w-12 object-contain transform group-hover:rotate-6 transition-transform duration-300" />
+              <span className="hidden sm:block text-3xl font-black tracking-tighter text-orange-500 lowercase group-hover:text-orange-600 transition-colors">filamengo</span>
             </Link>
 
             {/* Actions */}
@@ -80,8 +79,8 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16 gap-4">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 flex-shrink-0 group">
-            <img src="/printago.svg" alt="PrintAgo Logo" className="h-12 w-12 object-contain transform group-hover:rotate-6 transition-transform duration-300" />
-            <span className="hidden sm:block text-3xl font-black tracking-tighter text-orange-500 lowercase group-hover:text-orange-600 transition-colors">printago</span>
+            <img src="/filamengo.png" alt="Filamengo Logo" className="h-12 w-12 object-contain transform group-hover:rotate-6 transition-transform duration-300" />
+            <span className="hidden sm:block text-3xl font-black tracking-tighter text-orange-500 lowercase group-hover:text-orange-600 transition-colors">filamengo</span>
           </Link>
 
           {/* Central Search Bar */}
@@ -213,12 +212,7 @@ export default function Navbar() {
                 <Link href="/cart">Sepetim</Link>
                 {isMounted && totalItems > 0 && <span className="bg-red-600 text-white px-2 py-0.5 rounded-full text-xs">{totalItems}</span>}
               </div>
-<<<<<<< Updated upstream
-              {isMounted && isAuthenticated() && (
-                <Link href="/favorites" className="text-text-muted hover:text-red-500 transition-colors py-2 text-sm font-medium">Favorilerim</Link>
-              )}
-              <div className="flex gap-3 pt-3 border-t border-border">
-=======
+
 
               {/* Mobile Categories - Horizontal Scroll */}
               <div className="overflow-x-auto -mx-4 px-4 scrollbar-hide">
@@ -312,7 +306,7 @@ export default function Navbar() {
 
               {/* Mobile Auth */}
               <div className="pt-3 border-t border-gray-100">
->>>>>>> Stashed changes
+
                 {!isMounted ? (
                   <div className="h-9 flex-1" />
                 ) : isAuthenticated() ? (
@@ -339,24 +333,7 @@ export default function Navbar() {
         )}
       </div>
 
-<<<<<<< Updated upstream
-      {/* Categories Bar */}
-      <div className="hidden md:block border-t border-gray-100 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-8 h-10 text-[13px] font-medium text-gray-600 flex-wrap">
-            <Link
-              href="/"
-              className={`hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center ${
-                isMounted && pathname === "/" ? "text-orange-500 font-semibold border-b-2 border-orange-500" : ""
-              }`}
-            >
-              Tümü
-            </Link>
-            {CATEGORIES.map((category) => {
-              const isActive = isMounted && pathname === `/category/${category.slug}`;
-              const isWorldCup = category.slug === "dunya-kupasi-2026";
-              const hasSubcategories = category.subcategories && category.subcategories.length > 0;
-=======
+
         {/* Categories Bar - Desktop */}
         <div className="hidden md:block border-t border-gray-100 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -373,27 +350,6 @@ export default function Navbar() {
                 const isActive = isMounted && pathname === `/category/${category.slug}`;
                 const isWorldCup = category.slug === "dunya-kupasi-2026";
                 const hasSubcategories = category.subcategories && category.subcategories.length > 0;
-
-                return (
-                  <div key={category.slug} className="relative group h-full flex items-center">
-                    <Link
-                      href={`/category/${category.slug}`}
-                      className={`hover:text-orange-500 transition-colors whitespace-nowrap h-full flex items-center ${
-                        isActive
-                          ? "text-orange-500 font-semibold border-b-2 border-orange-500"
-                          : isWorldCup
-                          ? "text-red-600 font-semibold"
-                          : ""
-                      }`}
-                    >
-                      {category.label}
-                      {hasSubcategories && (
-                        <svg className="w-3.5 h-3.5 ml-1 text-gray-400 group-hover:text-orange-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      )}
-                    </Link>
->>>>>>> Stashed changes
 
               return (
                 <div key={category.slug} className="relative group h-full flex items-center">

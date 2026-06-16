@@ -1,59 +1,40 @@
+"use client";
+
 import Link from 'next/link';
-<<<<<<< Updated upstream
-=======
 import { usePathname } from 'next/navigation';
->>>>>>> Stashed changes
+import { useState, useEffect } from 'react';
+import { useAuthStore } from '@/store/useAuthStore';
 
 export default function Footer() {
+  const pathname = usePathname();
+  const { isAuthenticated, logout } = useAuthStore();
+  const [isMounted, setIsMounted] = useState(false);
+  
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Hide footer on admin, producer dashboard, designs and auth pages
+  const isHidden = 
+    pathname?.startsWith('/admin') || 
+    pathname?.startsWith('/dashboard') || 
+    pathname?.startsWith('/designs') || 
+    pathname?.startsWith('/auth');
+
+  if (isHidden) return null;
+
   return (
-    <footer className="bg-[#F3F4F6] text-gray-700 py-10 border-t border-gray-200 mt-auto flex-shrink-0">
+    <footer className="bg-[#F9FAFB] text-gray-600 py-6 border-t border-gray-100 mt-auto flex-shrink-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-<<<<<<< Updated upstream
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="col-span-1 md:col-span-1">
-            <Link href="/" className="flex items-center gap-2 mb-4">
-              <span className="text-2xl font-bold text-orange-500">PrintAgo</span>
-=======
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
           {/* Brand Block */}
           <div className="col-span-2 md:col-span-1 space-y-4">
             <Link href="/" className="flex items-center gap-2">
               <span className="text-2xl font-black tracking-tighter text-orange-500 lowercase">filamengo</span>
->>>>>>> Stashed changes
             </Link>
-            <p className="text-sm text-gray-500">
-              Türkiye'nin ilk 3D baskı pazaryeri. Kendi tasarımınızı yükleyin veya hazır ürünleri satın alın.
+            <p className="text-xs text-gray-500 leading-relaxed">
+              Türkiye'nin lider 3D baskı pazaryeri. Kendi tasarımınızı yükleyerek anında fiyat teklifi alın.
             </p>
-<<<<<<< Updated upstream
-          </div>
-          <div>
-            <h3 className="font-semibold text-gray-900 mb-4">Hızlı Linkler</h3>
-            <ul className="space-y-2 text-sm">
-              <li><Link href="/" className="hover:text-orange-500 transition-colors">Ana Sayfa</Link></li>
-              <li><Link href="/apply-producer" className="hover:text-orange-500 transition-colors">Üretici Ol</Link></li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-semibold text-gray-900 mb-4">Müşteri Hizmetleri</h3>
-            <ul className="space-y-2 text-sm">
-              <li><Link href="/" className="hover:text-orange-500 transition-colors">İletişim</Link></li>
-              <li><Link href="/" className="hover:text-orange-500 transition-colors">Sıkça Sorulan Sorular</Link></li>
-              <li><Link href="/" className="hover:text-orange-500 transition-colors">Kargo ve Teslimat</Link></li>
-              <li><Link href="/" className="hover:text-orange-500 transition-colors">İade Koşulları</Link></li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-semibold text-gray-900 mb-4">Yasal</h3>
-            <ul className="space-y-2 text-sm">
-              <li><Link href="/" className="hover:text-orange-500 transition-colors">Gizlilik Politikası</Link></li>
-              <li><Link href="/" className="hover:text-orange-500 transition-colors">Kullanım Koşulları</Link></li>
-              <li><Link href="/" className="hover:text-orange-500 transition-colors">Mesafeli Satış Sözleşmesi</Link></li>
-            </ul>
-          </div>
-        </div>
-        <div className="border-t border-gray-200 mt-8 pt-8 text-center text-sm text-gray-500">
-          &copy; {new Date().getFullYear()} PrintAgo. Tüm hakları saklıdır.
-=======
             {/* Social Links */}
             <div className="flex space-x-3 pt-1">
               <a href="https://www.instagram.com/filamengo3d?igsh=MWN1ZHZidDR6NW8zcA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" className="w-7 h-7 rounded-full bg-gray-100 hover:bg-orange-50 hover:text-orange-500 flex items-center justify-center text-gray-400 transition-colors">
@@ -83,8 +64,8 @@ export default function Footer() {
           <div>
             <h3 className="font-bold text-gray-900 mb-4 text-sm">Hızlı Erişim</h3>
             <ul className="space-y-2.5 text-xs text-gray-500">
-              <li><Link href="/" className="hover:text-orange-500 transition-colors">Anasayfa</Link></li>
-              <li><Link href="/" className="hover:text-orange-500 transition-colors">İletişim</Link></li>
+              <li><a href="/" className="hover:text-orange-500 transition-colors">Anasayfa</a></li>
+              <li><Link href="/iletisim" className="hover:text-orange-500 transition-colors">İletişim</Link></li>
               <li><Link href="/sss" className="hover:text-orange-500 transition-colors">Sıkça Sorulan Sorular</Link></li>
             </ul>
           </div>
@@ -95,9 +76,9 @@ export default function Footer() {
             <ul className="space-y-2.5 text-xs text-gray-500">
               <li><Link href="/apply-producer" className="text-orange-500 hover:text-orange-600 font-semibold transition-colors">Üretici Havuzuna Katılın</Link></li>
               <li><Link href="/hakkimizda" className="hover:text-orange-500 transition-colors">Hakkımızda</Link></li>
-              <li><Link href="/" className="hover:text-orange-500 transition-colors">Mesafeli Satış Sözleşmesi</Link></li>
-              <li><Link href="/" className="hover:text-orange-500 transition-colors">KVKK Politikası</Link></li>
-              <li><Link href="/" className="hover:text-orange-500 transition-colors">Teslimat ve Sipariş Koşulları</Link></li>
+              <li><Link href="/mesafeli-satis-sozlesmesi" className="hover:text-orange-500 transition-colors">Mesafeli Satış Sözleşmesi</Link></li>
+              <li><Link href="/kvkk-politikasi" className="hover:text-orange-500 transition-colors">KVKK Politikası</Link></li>
+              <li><Link href="/teslimat-ve-siparis-kosullari" className="hover:text-orange-500 transition-colors">Teslimat ve Sipariş Koşulları</Link></li>
             </ul>
           </div>
 
@@ -105,8 +86,17 @@ export default function Footer() {
           <div>
             <h3 className="font-bold text-gray-900 mb-4 text-sm">Üyelik</h3>
             <ul className="space-y-2.5 text-xs text-gray-500">
-              <li><Link href="/auth/register" className="hover:text-orange-500 transition-colors">Yeni Üyelik</Link></li>
-              <li><Link href="/auth/login" className="hover:text-orange-500 transition-colors">Üye Girişi</Link></li>
+              {isMounted && isAuthenticated() ? (
+                <>
+                  <li><Link href="/orders" className="hover:text-orange-500 transition-colors">Siparişlerim</Link></li>
+                  <li><button onClick={() => logout()} className="hover:text-orange-500 transition-colors text-left w-full">Çıkış Yap</button></li>
+                </>
+              ) : (
+                <>
+                  <li><Link href="/auth/register" className="hover:text-orange-500 transition-colors">Yeni Üyelik</Link></li>
+                  <li><Link href="/auth/login" className="hover:text-orange-500 transition-colors">Üye Girişi</Link></li>
+                </>
+              )}
               <li><Link href="/cart" className="hover:text-orange-500 transition-colors">Sepetim</Link></li>
               <li><Link href="/" className="hover:text-orange-500 transition-colors">İade İşlemleri</Link></li>
             </ul>
@@ -138,7 +128,6 @@ export default function Footer() {
               <img src="/troy.png" alt="Troy" className="h-4 w-auto object-contain select-none" />
             </div>
           </div>
->>>>>>> Stashed changes
         </div>
       </div>
     </footer>

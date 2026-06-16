@@ -19,14 +19,7 @@ export default function AdminApplicationsPage() {
 
   const fetchApplications = async () => {
     try {
-      const token = useAuthStore.getState().token;
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001"}/api/v1/applications`, {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      });
-      if (!response.ok) throw new Error("Başvurular alınamadı");
-      const data = await response.json();
+      const data = await api.request<Application[]>("/applications/");
       setApplications(data);
     } catch (error) {
       console.error(error);
@@ -43,15 +36,9 @@ export default function AdminApplicationsPage() {
     if (!confirm(`Bu başvuruyu ${action === "approve" ? "onaylamak" : "reddetmek"} istediğinize emin misiniz?`)) return;
 
     try {
-      const token = useAuthStore.getState().token;
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001"}/api/v1/applications/${id}/${action}`, {
-        method: "PUT",
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
+      await api.request(`/applications/${id}/${action}`, {
+        method: "PUT"
       });
-      
-      if (!response.ok) throw new Error("İşlem başarısız oldu");
       
       // Update UI
       setApplications(applications.map(app => 
