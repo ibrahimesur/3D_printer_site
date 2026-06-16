@@ -48,6 +48,7 @@ interface ProductFormData {
   filament_type: string;
   color: string;
   image_urls: string[];
+  file_3d_urls: string[];
   is_active: boolean;
 }
 
@@ -69,10 +70,12 @@ export default function AdminProductsPage() {
     filament_type: "",
     color: "",
     image_urls: [],
+    file_3d_urls: [],
     is_active: true,
   });
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploading3d, setUploading3d] = useState(false);
   
   // Crop state
   const [cropModalOpen, setCropModalOpen] = useState(false);
@@ -141,6 +144,33 @@ export default function AdminProductsPage() {
     } finally {
       setIsCropping(false);
       setUploadingImage(false);
+    }
+  };
+
+  const on3dFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    try {
+      setUploading3d(true);
+      const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '')}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('product-stls')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage.from('product-stls').getPublicUrl(fileName);
+      
+      setFormData((prev) => ({
+        ...prev,
+        file_3d_urls: [data.publicUrl], // just keep one 3d file for simplicity
+      }));
+    } catch (error: any) {
+      alert("3D Dosya yüklenirken hata: " + error.message);
+    } finally {
+      setUploading3d(false);
+      if (e.target) e.target.value = '';
     }
   };
 
@@ -219,6 +249,7 @@ export default function AdminProductsPage() {
         filament_type: product.filament_type || "",
         color: product.color || "",
         image_urls: getProductImages(product),
+        file_3d_urls: product.file_3d_urls || [],
         is_active: product.is_active,
       });
     } else {
@@ -231,6 +262,7 @@ export default function AdminProductsPage() {
         filament_type: "",
         color: "",
         image_urls: [],
+        file_3d_urls: [],
         is_active: true,
       });
     }
@@ -246,6 +278,13 @@ export default function AdminProductsPage() {
     setFormData((prev) => ({
       ...prev,
       image_urls: prev.image_urls.filter((_, i) => i !== index),
+    }));
+  };
+
+  const remove3dFile = () => {
+    setFormData((prev) => ({
+      ...prev,
+      file_3d_urls: [],
     }));
   };
 
@@ -641,6 +680,42 @@ export default function AdminProductsPage() {
                         <p className="mt-2 text-xs text-gray-500">
                           Birden fazla görsel ekleyebilirsiniz. İlk görsel kapak olarak kullanılır.
                         </p>
+                      )}
+                    </div>
+                    
+                    <div className="mt-6 border-t border-slate-100 pt-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        3D Tasarım Dosyası (STL / OBJ)
+                      </label>
+                      <label className="inline-flex cursor-pointer items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 transition-colors hover:bg-slate-50 relative overflow-hidden">
+                        {uploading3d ? "Yükleniyor..." : "3D Dosya Seç"}
+                        <input
+                          type="file"
+                          accept=".stl,.obj"
+                          onChange={on3dFileSelect}
+                          disabled={uploading3d}
+                          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                        />
+                      </label>
+                      {formData.file_3d_urls.length > 0 && (
+                        <div className="mt-3 bg-indigo-50 border border-indigo-100 rounded-lg p-3 flex justify-between items-center">
+                          <div className="flex items-center gap-2 text-sm text-indigo-700 font-medium">
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Tasarım Dosyası Yüklendi
+                          </div>
+                          <button
+                            type="button"
+                            onClick={remove3dFile}
+                            className="text-red-500 hover:text-red-700 p-1 bg-white rounded-md border border-red-100"
+                            title="Dosyayı kaldır"
+                          >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
