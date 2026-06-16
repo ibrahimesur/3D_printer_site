@@ -203,27 +203,35 @@ def get_all_products(db: Session = Depends(get_db), current_admin = Depends(get_
 
 
 # ── Public Endpoints ───────────────────────────────────────────────
-@router.get("/products", response_model=List[ProductResponse])
+@router.get("/products")
 def get_products(search: Optional[str] = None, db: Session = Depends(get_db)):
     """Müşteriler için aktif ürünleri listeler. İsteğe bağlı arama destekler."""
-    query = db.query(Product).filter(Product.is_active == True)
-    
-    print(f"SEARCH PARAM RECEIVED: '{search}'")
-    if search:
-        from sqlalchemy import or_
-        search_term = f"%{search}%"
-        query = query.filter(
-            or_(
-                Product.title.ilike(search_term),
-                Product.description.ilike(search_term),
-                Product.category.ilike(search_term)
-            )
-        )
-        print("SQL QUERY:", str(query))
+    try:
+        query = db.query(Product).filter(Product.is_active == True)
         
-    products = query.all()
-    print("RETURNED COUNT:", len(products))
-    return [product_to_response(product) for product in products]
+        print(f"SEARCH PARAM RECEIVED: '{search}'")
+        if search:
+            from sqlalchemy import or_
+            search_term = f"%{search}%"
+            query = query.filter(
+                or_(
+                    Product.title.ilike(search_term),
+                    Product.description.ilike(search_term),
+                    Product.category.ilike(search_term)
+                )
+            )
+            print("SQL QUERY:", str(query))
+            
+        products = query.all()
+        print("RETURNED COUNT:", len(products))
+        return [product_to_response(product) for product in products]
+    except Exception as e:
+        import traceback
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=500, content={
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        })
 
 
 @router.get("/products/{id}/similar", response_model=List[ProductResponse])
