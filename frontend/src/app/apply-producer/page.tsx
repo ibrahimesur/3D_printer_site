@@ -80,15 +80,15 @@ export default function ApplyProducerPage() {
         {/* About Us / Why Produce for Us Section */}
         <div className="md:w-1/2 bg-orange-50 p-8 md:p-12 flex flex-col justify-center border-r border-orange-100">
           <Link href="/" className="inline-flex items-center gap-2 mb-8 group">
-            <img src="/printago.svg" alt="PrintAgo" className="w-8 h-8" />
-            <span className="text-2xl font-black tracking-tighter text-orange-500 lowercase">printago</span>
+            <img src="/filamengo.png" alt="Filamengo" className="w-8 h-8" />
+            <span className="text-2xl font-black tracking-tighter text-orange-500 lowercase">filamengo</span>
           </Link>
           
           <h1 className="text-3xl font-bold text-gray-900 mb-6">Bizim İçin Üretim Yapın</h1>
           
           <div className="space-y-6 text-gray-600">
             <p>
-              PrintAgo, 3D baskı teknolojisini herkes için erişilebilir kılan Türkiye'nin öncü pazaryeridir. Büyük bir müşteri ağına ulaşıyoruz ve bizimle birlikte büyüyecek yetenekli 3D yazıcı üreticilerini arıyoruz.
+              Filamengo, 3D baskı teknolojisini herkes için erişilebilir kılan Türkiye'nin öncü pazaryeridir. Büyük bir müşteri ağına ulaşıyoruz ve bizimle birlikte büyüyecek yetenekli 3D yazıcı üreticilerini arıyoruz.
             </p>
             <div className="flex gap-4">
               <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0 text-orange-500 shadow-sm">
@@ -105,7 +105,7 @@ export default function ApplyProducerPage() {
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900">Hazır Müşteri ve Sipariş Ağı</h3>
-                <p className="text-sm">Pazarlama, reklam veya müşteri bulma süreçleriyle vakit kaybetmeyin. PrintAgo ile doğrudan baskı ihtiyacı olan binlerce müşteriye anında ulaşın.</p>
+                <p className="text-sm">Pazarlama, reklam veya müşteri bulma süreçleriyle vakit kaybetmeyin. Filamengo ile doğrudan baskı ihtiyacı olan binlerce müşteriye anında ulaşın.</p>
               </div>
             </div>
             <div className="flex gap-4">
@@ -114,7 +114,7 @@ export default function ApplyProducerPage() {
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900">Zamanında ve Güvenli Ödeme</h3>
-                <p className="text-sm">Tüm sipariş ve tahsilat süreçleri PrintAgo güvencesi altındadır. Tamamladığınız üretimlerin ödemelerini her hafta düzenli olarak banka hesabınızdan çekin.</p>
+                <p className="text-sm">Tüm sipariş ve tahsilat süreçleri Filamengo güvencesi altındadır. Tamamladığınız üretimlerin ödemelerini her hafta düzenli olarak banka hesabınızdan çekin.</p>
               </div>
             </div>
           </div>

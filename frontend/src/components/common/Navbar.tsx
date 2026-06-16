@@ -88,8 +88,8 @@ export default function Navbar() {
           <div className="flex items-center justify-between h-14 sm:h-16 gap-4">
             {/* Logo with Link to Dashboard */}
             <Link href="/dashboard" className="flex items-center gap-2 sm:gap-3 flex-shrink-0 group">
-              <img src="/printago.svg" alt="PrintAgo Logo" className="h-9 w-9 sm:h-12 sm:w-12 object-contain transform group-hover:rotate-6 transition-transform duration-300" />
-              <span className="hidden sm:block text-3xl font-black tracking-tighter text-orange-500 lowercase group-hover:text-orange-600 transition-colors">printago</span>
+              <img src="/filamengo.png" alt="Filamengo Logo" className="h-9 w-9 sm:h-12 sm:w-12 object-contain transform group-hover:rotate-6 transition-transform duration-300" />
+              <span className="hidden sm:block text-3xl font-black tracking-tighter text-orange-500 lowercase group-hover:text-orange-600 transition-colors">filamengo</span>
             </Link>
 
             {/* Actions */}
@@ -111,8 +111,8 @@ export default function Navbar() {
           <div className="flex items-center justify-between h-14 sm:h-16 gap-2 sm:gap-4">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 sm:gap-3 flex-shrink-0 group">
-              <img src="/printago.svg" alt="PrintAgo Logo" className="h-9 w-9 sm:h-12 sm:w-12 object-contain transform group-hover:rotate-6 transition-transform duration-300" />
-              <span className="hidden sm:block text-3xl font-black tracking-tighter text-orange-500 lowercase group-hover:text-orange-600 transition-colors">printago</span>
+              <img src="/filamengo.png" alt="Filamengo Logo" className="h-9 w-9 sm:h-12 sm:w-12 object-contain transform group-hover:rotate-6 transition-transform duration-300" />
+              <span className="hidden sm:block text-3xl font-black tracking-tighter text-orange-500 lowercase group-hover:text-orange-600 transition-colors">filamengo</span>
             </Link>
 
             {/* Central Search Bar - Desktop */}

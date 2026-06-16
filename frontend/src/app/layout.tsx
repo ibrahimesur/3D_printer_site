@@ -10,14 +10,14 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "PrintAgo | 3D Baskı Pazaryeri",
+  title: "Filamengo | 3D Baskı Pazaryeri",
   description:
     "3D yazıcı sahiplerini müşterilerle buluşturan Türkiye'nin ilk 3D baskı pazaryeri. STL dosyanızı yükleyin, anında fiyat alın.",
   keywords: ["3D baskı", "3D printing", "STL", "3D yazıcı", "pazaryeri", "marketplace"],
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "PrintAgo",
+    title: "Filamengo",
   },
 };
 

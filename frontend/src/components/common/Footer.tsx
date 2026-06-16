@@ -7,7 +7,7 @@ export default function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
           <div className="col-span-1 md:col-span-1">
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <span className="text-2xl font-bold text-orange-500">PrintAgo</span>
+              <span className="text-2xl font-bold text-orange-500">Filamengo</span>
             </Link>
             <p className="text-sm text-gray-500">
               Türkiye'nin ilk 3D baskı pazaryeri. Kendi tasarımınızı yükleyin veya hazır ürünleri satın alın.
@@ -39,7 +39,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="border-t border-gray-200 mt-8 pt-8 text-center text-sm text-gray-500">
-          &copy; {new Date().getFullYear()} PrintAgo. Tüm hakları saklıdır.
+          &copy; {new Date().getFullYear()} Filamengo. Tüm hakları saklıdır.
         </div>
       </div>
     </footer>

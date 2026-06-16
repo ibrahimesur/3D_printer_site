@@ -24,7 +24,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="h-full flex flex-col">
             <div className="flex items-center justify-center h-20 border-b border-gray-800 overflow-hidden hover:bg-gray-800 transition-colors cursor-pointer">
               <Link href="/">
-                <img src="/printago.svg" alt="PrintAgo Logo" className="h-12 w-auto object-contain" />
+                <img src="/filamengo.png" alt="Filamengo Logo" className="h-12 w-auto object-contain" />
               </Link>
             </div>
             
