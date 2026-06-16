@@ -190,9 +190,18 @@ def delete_product(id: int, db: Session = Depends(get_db), current_admin = Depen
         except Exception as e:
             print(f"Failed to delete product files from Supabase: {e}")
 
-        db.delete(db_product)
-        db.commit()
-        return {"message": "Ürün ve ilgili dosyaları kalıcı olarak silindi"}
+        try:
+            db.delete(db_product)
+            db.commit()
+            return {"message": "Ürün ve ilgili dosyaları kalıcı olarak silindi"}
+        except Exception as e:
+            db.rollback()
+            if "ForeignKeyViolation" in str(e) or "IntegrityError" in str(type(e)):
+                raise HTTPException(
+                    status_code=400, 
+                    detail="Bu ürün aktif siparişlerde veya sepetlerde bulunduğu için kalıcı olarak silinemez, pasif durumda kalması gereklidir."
+                )
+            raise HTTPException(status_code=500, detail="Ürün silinirken bir hata oluştu: " + str(e))
 
 
 @router.get("/admin/products", response_model=List[ProductResponse])
