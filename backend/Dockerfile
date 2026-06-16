@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y \
 # PrusaSlicer Linux AppImage veya Binary dosyasını indir
 WORKDIR /opt
 # Not: En son stabil CLI destekli PrusaSlicer sürümünü indiriyoruz
-RUN wget https://github.com/prusa3d/PrusaSlicer/releases/download/version_2.7.4/PrusaSlicer-2.7.4+linux-x64-GTK3-202404051128.tar.bz2 -O prusaslicer.tar.bz2 \
+RUN wget https://github.com/prusa3d/PrusaSlicer/releases/download/version_2.7.4/PrusaSlicer-2.7.4+linux-x64-GTK3-202404050928.tar.bz2 -O prusaslicer.tar.bz2 \
     && tar -xf prusaslicer.tar.bz2 \
     && rm prusaslicer.tar.bz2 \
     && mv PrusaSlicer* prusaslicer
