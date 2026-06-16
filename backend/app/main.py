@@ -60,7 +60,7 @@ app.add_middleware(
         "https://filamengo.com",
         "https://www.filamengo.com",
     ],
-    allow_origin_regex="https://.*\.vercel\.app",
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
