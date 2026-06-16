@@ -58,7 +58,7 @@ export default function ProducerDesignsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const file3dInputRef = useRef<HTMLInputElement>(null);
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001";
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api/v1";
 
   useEffect(() => {
     fetchDesigns();
@@ -69,7 +69,7 @@ export default function ProducerDesignsPage() {
     try {
       setLoading(true);
       const token = useAuthStore.getState().token;
-      const response = await fetch(`${API_BASE}/api/v1/producer/designs`, {
+      const response = await fetch(`${API_URL}/producer/designs`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) throw new Error("Tasarımlar alınamadı");
@@ -85,7 +85,7 @@ export default function ProducerDesignsPage() {
   const fetchStats = async () => {
     try {
       const token = useAuthStore.getState().token;
-      const response = await fetch(`${API_BASE}/api/v1/producer/designs/stats`, {
+      const response = await fetch(`${API_URL}/producer/designs/stats`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) throw new Error("İstatistikler alınamadı");
@@ -121,7 +121,7 @@ export default function ProducerDesignsPage() {
         });
       }
 
-      const response = await fetch(`${API_BASE}/api/v1/producer/designs/`, {
+      const response = await fetch(`${API_URL}/producer/designs/`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
