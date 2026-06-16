@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 
 import Footer from "@/components/common/Footer";
 
-import { Analytics } from "@vercel/analytics/react";
+import { Analytics } from "@vercel/analytics/next";
 
 export default function RootLayout({
   children,
