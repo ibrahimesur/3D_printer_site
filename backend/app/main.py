@@ -3,6 +3,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.requests import Request
+from fastapi.exceptions import ResponseValidationError
+from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from contextlib import asynccontextmanager
@@ -67,14 +69,40 @@ app.add_middleware(
 # ── Include API Routers ──────────────────────────────────────
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
+class CatchAllMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        try:
+            return await call_next(request)
+        except Exception as e:
+            import traceback
+            err_msg = "".join(traceback.format_exception(type(e), e, e.__traceback__))
+            print("MIDDLEWARE CAUGHT UNHANDLED EXCEPTION:", err_msg)
+            return JSONResponse(
+                status_code=400,
+                content={"detail": f"Middleware Catch: {str(e)}", "traceback": err_msg},
+                headers={"Access-Control-Allow-Origin": "*"}
+            )
+
+app.add_middleware(CatchAllMiddleware)
+
+@app.exception_handler(ResponseValidationError)
+async def validation_exception_handler(request: Request, exc: ResponseValidationError):
+    err_msg = str(exc.errors())
+    print("RESPONSE VALIDATION ERROR:", err_msg)
+    return JSONResponse(
+        status_code=400,
+        content={"detail": f"Response Validation Error: {err_msg}", "traceback": err_msg},
+        headers={"Access-Control-Allow-Origin": "*"}
+    )
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     import traceback
     err_msg = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
     print(f"Global Error Handled: {err_msg}")
     return JSONResponse(
-        status_code=500,
-        content={"detail": "Internal Server Error", "traceback": err_msg},
+        status_code=400,
+        content={"detail": f"Global Handler: {str(exc)}", "traceback": err_msg},
         headers={"Access-Control-Allow-Origin": "*"}
     )
 
