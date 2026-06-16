@@ -37,6 +37,9 @@ class DesignResponse(BaseModel):
     image_urls: list
     file_3d_url: Optional[str] = None
     file_3d_urls: list = []
+    category: Optional[str] = None
+    filament_type: Optional[str] = None
+    color: Optional[str] = None
     is_approved: bool
 
     class Config:
@@ -59,6 +62,9 @@ async def create_design(
     title: str = Form(...),
     description: str = Form(""),
     suggested_price: float = Form(0.0),
+    category: str = Form(""),
+    filament_type: str = Form(""),
+    color: str = Form(""),
     images: List[UploadFile] = File(default=[]),
     files_3d: List[UploadFile] = File(default=[]),
     db: Session = Depends(get_db),
@@ -140,6 +146,9 @@ async def create_design(
         description=description,
         suggested_price=suggested_price,
         royalty_percentage=10.0,  # Sitenin standart telif payı
+        category=category if category else None,
+        filament_type=filament_type if filament_type else None,
+        color=color if color else None,
         image_urls=saved_image_urls,
         file_3d_urls=saved_3d_urls,
         is_approved=False,

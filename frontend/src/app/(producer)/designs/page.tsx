@@ -35,6 +35,19 @@ export default function ProducerDesignsPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [suggestedPrice, setSuggestedPrice] = useState("");
+  const [category, setCategory] = useState("");
+  const [filamentType, setFilamentType] = useState("");
+  const [color, setColor] = useState("");
+
+  const CATEGORIES = [
+    "Figür & Karakter",
+    "Dekoratif Ürünler",
+    "Yedek Parça",
+    "Maket & Hobi",
+    "Aksesuar",
+    "Filamentler",
+    "Dünya Kupası 2026"
+  ];
 
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [file3dFiles, setFile3dFiles] = useState<File[]>([]);
@@ -94,6 +107,9 @@ export default function ProducerDesignsPage() {
       formData.append("title", title);
       formData.append("description", description);
       formData.append("suggested_price", suggestedPrice || "0");
+      formData.append("category", category);
+      formData.append("filament_type", filamentType);
+      formData.append("color", color);
 
       imageFiles.forEach((file) => {
         formData.append("images", file);
@@ -120,6 +136,9 @@ export default function ProducerDesignsPage() {
       setTitle("");
       setDescription("");
       setSuggestedPrice("");
+      setCategory("");
+      setFilamentType("");
+      setColor("");
 
       setImageFiles([]);
       setFile3dFiles([]);
@@ -260,6 +279,47 @@ export default function ProducerDesignsPage() {
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors resize-none"
                   placeholder="Tasarımınızı kısaca açıklayın..."
                 />
+              </div>
+
+              {/* Attributes (Category, Filament, Color) */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Kategori *</label>
+                  <select required value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors bg-white">
+                    <option value="">Seçiniz...</option>
+                    {CATEGORIES.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Filament Türü</label>
+                  <select value={filamentType} onChange={(e) => setFilamentType(e.target.value)} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors bg-white">
+                    <option value="">Seçiniz...</option>
+                    <option value="PLA">PLA</option>
+                    <option value="PETG">PETG</option>
+                    <option value="ABS">ABS</option>
+                    <option value="TPU">TPU (Esnek)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Renk</label>
+                  <select value={color} onChange={(e) => setColor(e.target.value)} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors bg-white">
+                    <option value="">Seçiniz...</option>
+                    <option value="Siyah">Siyah</option>
+                    <option value="Beyaz">Beyaz</option>
+                    <option value="Gri">Gri</option>
+                    <option value="Kırmızı">Kırmızı</option>
+                    <option value="Mavi">Mavi</option>
+                    <option value="Yeşil">Yeşil</option>
+                    <option value="Sarı">Sarı</option>
+                    <option value="Turuncu">Turuncu</option>
+                    <option value="Pembe">Pembe</option>
+                    <option value="Şeffaf">Şeffaf</option>
+                    <option value="Çok Renkli">Çok Renkli</option>
+                    <option value="Diğer">Diğer</option>
+                  </select>
+                </div>
               </div>
 
               {/* Two upload areas side by side */}
