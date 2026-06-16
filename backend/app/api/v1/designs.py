@@ -77,24 +77,31 @@ def create_design(
     """Üreticinin yeni tasarım eklemesi."""
     _require_producer(current_user)
 
-    new_design = Design(
-        creator_id=current_user.id,
-        title=design.title,
-        description=design.description,
-        suggested_price=design.suggested_price,
-        royalty_percentage=10.0,  # Sitenin standart telif payı
-        category=design.category,
-        filament_type=design.filament_type,
-        color=design.color,
-        image_urls=design.image_urls,
-        file_3d_urls=design.file_3d_urls,
-        is_approved=False,
-    )
-    db.add(new_design)
-    db.commit()
-    db.refresh(new_design)
-
-    return new_design
+    try:
+        new_design = Design(
+            creator_id=current_user.id,
+            title=design.title,
+            description=design.description,
+            suggested_price=design.suggested_price,
+            royalty_percentage=10.0,  # Sitenin standart telif payı
+            category=design.category,
+            filament_type=design.filament_type,
+            color=design.color,
+            image_urls=design.image_urls,
+            file_3d_urls=design.file_3d_urls,
+            is_approved=False,
+        )
+        db.add(new_design)
+        db.commit()
+        db.refresh(new_design)
+        return new_design
+    except Exception as e:
+        import traceback
+        err_msg = "".join(traceback.format_exception(type(e), e, e.__traceback__))
+        # Print it to Render logs just in case
+        print("CREATE_DESIGN_ERROR:", err_msg)
+        # We raise a 400 so it doesn't get swallowed by 500 handlers, and the frontend will display it!
+        raise HTTPException(status_code=400, detail=f"Hata yakalandı: {err_msg}")
 
 
 @router.get("/", response_model=List[DesignResponse])
