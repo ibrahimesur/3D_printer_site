@@ -53,6 +53,8 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "http://localhost:6001",
         "http://127.0.0.1:6001",
+        "https://filamengo.com",
+        "https://www.filamengo.com",
     ],
     allow_origin_regex="https://.*\.vercel\.app",
     allow_credentials=True,
