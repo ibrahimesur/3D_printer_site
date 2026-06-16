@@ -59,6 +59,13 @@ export default function ProducerDesignsPage() {
   const file3dInputRef = useRef<HTMLInputElement>(null);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api/v1";
+  const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:8001';
+
+  function resolveFileUrl(url: string | null | undefined): string | null {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    return `${BACKEND_URL}${url}`;
+  }
 
   useEffect(() => {
     fetchDesigns();
@@ -528,7 +535,7 @@ export default function ProducerDesignsPage() {
                       <td className="px-6 py-4">
                         {design.image_urls.length > 0 ? (
                           <img
-                            src={`${API_BASE}${design.image_urls[0]}`}
+                            src={resolveFileUrl(design.image_urls[0]) || ""}
                             alt={design.title}
                             className="w-14 h-14 object-cover rounded-lg border border-gray-200"
                           />
