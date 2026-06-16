@@ -30,17 +30,10 @@ export default function ApplyProducerPage() {
     setErrorMessage("");
 
     try {
-      // POST request to our new application endpoint
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001"}/api/v1/applications/apply`, {
+      await api.request("/applications/apply", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: formData,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || "Başvuru sırasında bir hata oluştu.");
-      }
 
       setStatus("success");
       // Optional: automatically login user with the created customer credentials, 
