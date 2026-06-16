@@ -179,6 +179,13 @@ class ApiClient {
     return this.request("/admin/orders");
   }
 
+  async reassignAdminOrder(orderId: number, producerId: number | null) {
+    return this.request(`/admin/orders/${orderId}/reassign`, {
+      method: "PATCH",
+      body: { producer_id: producerId },
+    });
+  }
+
   async getAdminPendingDesigns() {
     return this.request("/admin/designs/pending");
   }
