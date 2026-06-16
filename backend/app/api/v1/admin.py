@@ -101,8 +101,11 @@ async def approve_design(
         price=design.suggested_price,
         image_urls=design.image_urls,
         image_url=design.image_urls[0] if design.image_urls else None,
+        is_active=True,
         design_id=design.id,
-        is_active=True
+        category=design.category,
+        filament_type=design.filament_type,
+        color=design.color
     )
     
     db.add(new_product)

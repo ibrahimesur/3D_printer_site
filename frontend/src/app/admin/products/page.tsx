@@ -163,8 +163,9 @@ export default function AdminProductsPage() {
           ...d,
           is_design: true,
           is_active: false,
-          category: "Tasarım",
-          filament_type: null
+          category: d.category || "Tasarım",
+          filament_type: d.filament_type || null,
+          color: d.color || null
         }));
         setProducts([...formattedDesigns, ...data]);
       } catch (err) {
