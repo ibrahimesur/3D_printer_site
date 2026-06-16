@@ -58,9 +58,9 @@ export default function CartPage() {
   const finalTotal = totalPrice > 0 ? totalPrice + shippingCost : 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-32 pb-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Sepetim ({totalItems} Ürün)</h1>
+    <div className="min-h-screen bg-gray-50 pt-20 sm:pt-32 pb-10">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <h1 className="text-xl sm:text-3xl font-bold text-gray-900 mb-4 sm:mb-8">Sepetim ({totalItems} Ürün)</h1>
 
         {items.length === 0 ? (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
@@ -84,8 +84,8 @@ export default function CartPage() {
                   <div className="flow-root">
                     <ul role="list" className="-my-6 divide-y divide-gray-200">
                       {items.map((item) => (
-                        <li key={`${item.id}-${item.filament}`} className="py-6 flex">
-                          <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 bg-gray-50">
+                        <li key={`${item.id}-${item.filament}`} className="py-4 sm:py-6 flex">
+                          <div className="h-16 w-16 sm:h-24 sm:w-24 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 bg-gray-50">
                             <img
                               src={item.image || "/placeholder.png"}
                               alt={item.name}
@@ -93,18 +93,18 @@ export default function CartPage() {
                             />
                           </div>
 
-                          <div className="ml-4 flex flex-1 flex-col">
+                          <div className="ml-3 sm:ml-4 flex flex-1 flex-col">
                             <div>
-                              <div className="flex justify-between text-base font-medium text-gray-900">
-                                <h3>
+                              <div className="flex flex-col sm:flex-row sm:justify-between text-sm sm:text-base font-medium text-gray-900">
+                                <h3 className="line-clamp-2">
                                   <Link href={`/product/${item.id}`} className="hover:text-orange-500 transition-colors">
                                     {item.name}
                                   </Link>
                                 </h3>
-                                <p className="ml-4 text-orange-500 font-bold">{(item.price * item.quantity).toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</p>
+                                <p className="sm:ml-4 mt-1 sm:mt-0 text-orange-500 font-bold">{(item.price * item.quantity).toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</p>
                               </div>
-                              <p className="mt-1 text-sm text-gray-500">Filament: {item.filament}</p>
-                              <p className="mt-1 text-xs text-gray-400">Birim Fiyat: {item.price.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</p>
+                              <p className="mt-1 text-xs sm:text-sm text-gray-500">Filament: {item.filament}</p>
+                              <p className="mt-0.5 text-xs text-gray-400 hidden sm:block">Birim Fiyat: {item.price.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</p>
                             </div>
                             <div className="flex flex-1 items-end justify-between text-sm">
                               <div className="flex items-center border border-gray-300 rounded-lg">

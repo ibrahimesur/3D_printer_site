@@ -2,9 +2,9 @@ import Link from 'next/link';
 
 export default function Footer() {
   return (
-    <footer className="bg-[#F3F4F6] text-gray-700 py-10 border-t border-gray-200 mt-auto flex-shrink-0">
+    <footer className="bg-[#F3F4F6] text-gray-700 py-8 sm:py-10 border-t border-gray-200 mt-auto flex-shrink-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
           <div className="col-span-1 md:col-span-1">
             <Link href="/" className="flex items-center gap-2 mb-4">
               <span className="text-2xl font-bold text-orange-500">PrintAgo</span>
