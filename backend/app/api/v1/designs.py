@@ -46,6 +46,17 @@ class DesignResponse(BaseModel):
         from_attributes = True
 
 
+class DesignCreate(BaseModel):
+    title: str
+    description: Optional[str] = ""
+    suggested_price: float = 0.0
+    category: Optional[str] = None
+    filament_type: Optional[str] = None
+    color: Optional[str] = None
+    image_urls: List[str] = []
+    file_3d_urls: List[str] = []
+
+
 def _require_producer(user: User):
     """Yalnızca üretici rolündeki kullanıcıları geçirir."""
     if user.role not in (UserRole.PRODUCER, UserRole.ADMIN):
@@ -58,99 +69,25 @@ def _require_producer(user: User):
 # ── Endpoints ─────────────────────────────────────────────────
 
 @router.post("/", response_model=DesignResponse, status_code=status.HTTP_201_CREATED)
-async def create_design(
-    title: str = Form(...),
-    description: str = Form(""),
-    suggested_price: float = Form(0.0),
-    category: str = Form(""),
-    filament_type: str = Form(""),
-    color: str = Form(""),
-    images: List[UploadFile] = File(default=[]),
-    files_3d: List[UploadFile] = File(default=[]),
+def create_design(
+    design: DesignCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Üreticinin yeni tasarım eklemesi, ürün fotoğraflarını ve 3D dosyasını yükler."""
+    """Üreticinin yeni tasarım eklemesi."""
     _require_producer(current_user)
-
-    saved_image_urls = []
-    saved_3d_urls = []
-
-    from supabase import create_client, Client
-    from app.core.config import settings
-    
-    supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
-
-    # Save product images to Supabase
-    for img in images:
-        ext = os.path.splitext(img.filename or "")[1].lower()
-        if ext not in ALLOWED_IMAGE_EXTENSIONS:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Geçersiz görsel formatı: {ext}. İzin verilen: {', '.join(ALLOWED_IMAGE_EXTENSIONS)}",
-            )
-        unique_name = f"{uuid.uuid4().hex}{ext}"
-        # Upload image to product-images bucket
-        file_content = await img.read()
-        
-        # Determine content type
-        content_type = "image/jpeg"
-        if ext == ".png":
-            content_type = "image/png"
-        elif ext == ".webp":
-            content_type = "image/webp"
-
-        try:
-            supabase.storage.from_("product-images").upload(
-                unique_name, 
-                file_content,
-                file_options={"content-type": content_type}
-            )
-        except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Görsel Supabase'e yüklenirken hata oluştu (Sunucuyu yeniden başlattınız mı?): {str(e)}",
-            )
-        
-        # Get public url and save it
-        public_url = supabase.storage.from_("product-images").get_public_url(unique_name)
-        saved_image_urls.append(public_url)
-
-    # Save 3D files to Supabase
-    
-    for f3d in files_3d:
-        if f3d and f3d.filename:
-            ext = os.path.splitext(f3d.filename)[1].lower()
-            if ext not in ALLOWED_3D_EXTENSIONS:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Geçersiz 3D dosya formatı: {ext}. İzin verilen: {', '.join(ALLOWED_3D_EXTENSIONS)}",
-                )
-            unique_name = f"{uuid.uuid4().hex}_{f3d.filename}"
-            # Read file content
-            file_content = await f3d.read()
-            try:
-                res = supabase.storage.from_("product-stls").upload(unique_name, file_content)
-            except Exception as e:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f"3D Dosya Supabase'e yüklenirken hata oluştu (Sunucuyu yeniden başlattınız mı?): {str(e)}",
-                )
-            
-            # Just save the unique filename in the DB (can't download without signed url anyway)
-            saved_3d_urls.append(unique_name)
 
     new_design = Design(
         creator_id=current_user.id,
-        title=title,
-        description=description,
-        suggested_price=suggested_price,
+        title=design.title,
+        description=design.description,
+        suggested_price=design.suggested_price,
         royalty_percentage=10.0,  # Sitenin standart telif payı
-        category=category if category else None,
-        filament_type=filament_type if filament_type else None,
-        color=color if color else None,
-        image_urls=saved_image_urls,
-        file_3d_urls=saved_3d_urls,
+        category=design.category,
+        filament_type=design.filament_type,
+        color=design.color,
+        image_urls=design.image_urls,
+        file_3d_urls=design.file_3d_urls,
         is_approved=False,
     )
     db.add(new_design)
