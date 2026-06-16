@@ -75,7 +75,7 @@ export default function ProducerOnboardingPage() {
       await api.setupPrinter(payload);
       
       // Kurulum başarılı, sipariş paneline yönlendir
-      router.push("/producer/orders");
+      router.push("/dashboard");
     } catch (err: any) {
       setError(err.message || "Kurulum sırasında bir hata oluştu.");
       setIsLoading(false);

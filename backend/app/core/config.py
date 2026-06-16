@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     # CORS
     FRONTEND_URL: str = "http://localhost:3000"
 
-    # Supabase
+    # Supabase (loaded from environment variables in .env)
     SUPABASE_URL: str = ""
     SUPABASE_KEY: str = ""
 

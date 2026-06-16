@@ -130,6 +130,9 @@ async def start_print_job(
     allowed_statuses = [
         PrintJobStatus.PENDING.value,
         PrintJobStatus.STREAMING.value,
+        PrintJobStatus.FAILED.value,
+        PrintJobStatus.COMPLETED.value,
+        PrintJobStatus.PRINTING.value,
     ]
     if job.status not in allowed_statuses:
         raise HTTPException(
@@ -139,6 +142,15 @@ async def start_print_job(
                 f"Yalnızca {', '.join(allowed_statuses)} durumlarından başlatılabilir."
             ),
         )
+
+    # Reset progress details for retry / start
+    job.status = PrintJobStatus.PENDING.value
+    job.progress_percentage = 0.0
+    job.current_layer = 0
+    job.total_layers = 0
+    job.started_at = None
+    job.ended_at = None
+    db.commit()
 
     # Arka plan görevini kuyruğa ekle
     background_tasks.add_task(

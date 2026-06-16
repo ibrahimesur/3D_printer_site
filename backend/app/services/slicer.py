@@ -115,6 +115,19 @@ class SlicerService:
 
     def __init__(self):
         self.binary: str = settings.SLICER_BINARY
+        
+        # Check standard macOS path if binary is the default "prusa-slicer"
+        if self.binary == "prusa-slicer":
+            possible_paths = [
+                "/Applications/PrusaSlicer.app/Contents/MacOS/PrusaSlicer",
+                "/Applications/Original Prusa Drivers/PrusaSlicer.app/Contents/MacOS/PrusaSlicer"
+            ]
+            for path in possible_paths:
+                if os.path.exists(path):
+                    self.binary = path
+                    logger.info("macOS PrusaSlicer uygulaması tespit edildi: %s", self.binary)
+                    break
+
         self.profiles_dir: Path = Path(settings.SLICER_PROFILES_DIR)
         self.temp_dir: Optional[Path] = (
             Path(settings.SLICER_TEMP_DIR) if settings.SLICER_TEMP_DIR else None
@@ -273,9 +286,9 @@ class SlicerService:
 
         # ── Log stdout/stderr ────────────────────────────────────
         if result.stdout:
-            logger.debug("Slicer stdout (son 2000 karakter):\n%s", result.stdout[-2000:])
+            logger.warning("Slicer stdout:\n%s", result.stdout[-2000:])
         if result.stderr:
-            logger.debug("Slicer stderr (son 2000 karakter):\n%s", result.stderr[-2000:])
+            logger.warning("Slicer stderr:\n%s", result.stderr[-2000:])
 
         # ── Return code kontrolü ─────────────────────────────────
         if result.returncode != 0:
@@ -442,12 +455,12 @@ class SlicerService:
                 target_slot,
             )
 
-            # ── 5a. Başarılı → STREAMING + katman tahmini ────────
+            # ── 5a. Başarılı → PENDING + katman tahmini ────────
             if job_id:
                 estimated_layers = self._estimate_layers(gcode_path)
                 _update_job_status(
                     job_id=job_id,
-                    new_status=PrintJobStatus.STREAMING,
+                    new_status=PrintJobStatus.PENDING,
                     total_layers=estimated_layers,
                 )
 
@@ -457,16 +470,78 @@ class SlicerService:
             )
             return gcode_path
 
-        except SlicerException:
-            # ── 5b. Hata → FAILED + başarısız G-code temizle ─────
+        except (SlicerException, FileNotFoundError, Exception) as exc:
+            # Check if this is a mock printer. If it's a real printer, DO NOT fallback to mock!
+            is_mock_printer = True
             if job_id:
-                _update_job_status(
-                    job_id=job_id,
-                    new_status=PrintJobStatus.FAILED,
-                    ended_at=datetime.utcnow(),
+                db = SessionLocal()
+                try:
+                    job = db.query(SecurePrintJob).filter(SecurePrintJob.id == job_id).first()
+                    if job and job.printer:
+                        api_url = job.printer.api_url or ""
+                        is_mock_printer = not api_url or "mock-printer" in api_url or "demo-printer" in api_url
+                except Exception as db_err:
+                    logger.error("slicer: DB query failed for job #%s: %s", job_id, db_err)
+                finally:
+                    db.close()
+
+            if not is_mock_printer:
+                logger.error(
+                    "slicer: Dilimleme real yazici (job #%s) icin basarisiz oldu: %s",
+                    job_id or "-", str(exc)
                 )
-            self._secure_delete(str(output_path))
-            raise
+                if job_id:
+                    _update_job_status(
+                        job_id=job_id,
+                        new_status=PrintJobStatus.FAILED,
+                        ended_at=datetime.utcnow(),
+                    )
+                self._secure_delete(str(output_path))
+                raise exc
+
+            # ── 5b. Hata → Simülasyon için mock G-code üret (Sadece mock yazıcılar için) ─────
+            logger.warning(
+                "Dilimleyici çalıştırılamadı (job #%s): %s. Baskı simülasyonu için mock G-code üretiliyor...",
+                job_id or "-", str(exc),
+            )
+            try:
+                with open(output_path, "w") as f:
+                    f.write("; Mock Gcode for job - actual moves for testing\n")
+                    f.write("G90 ; absolute positioning\n")
+                    f.write("M83 ; relative extrusion\n")
+                    f.write("G28 ; home all axes\n")
+                    f.write("G1 Z5 F3000 ; lift nozzle\n")
+                    f.write("G1 X10 Y10 F3000 ; move to start\n")
+                    for i in range(100):
+                        f.write(f"; LAYER_CHANGE\n; LAYER:{i}\n")
+                        f.write(f"G1 Z{0.2 + i * 0.2:.2f} F1500\n")
+                        # Draw a small 20x20 square in the air
+                        f.write("G1 X30 Y10 F2000\n")
+                        f.write("G1 X30 Y30 F2000\n")
+                        f.write("G1 X10 Y30 F2000\n")
+                        f.write("G1 X10 Y10 F2000\n")
+                    f.write("G28 X0 Y0 ; home X and Y\n")
+                    f.write("M84 ; disable motors\n")
+                gcode_path = str(output_path)
+                
+                if job_id:
+                    estimated_layers = self._estimate_layers(gcode_path)
+                    _update_job_status(
+                        job_id=job_id,
+                        new_status=PrintJobStatus.PENDING,
+                        total_layers=estimated_layers,
+                    )
+                return gcode_path
+            except Exception as e:
+                logger.error("Mock G-code üretilemedi: %s", e)
+                if job_id:
+                    _update_job_status(
+                        job_id=job_id,
+                        new_status=PrintJobStatus.FAILED,
+                        ended_at=datetime.utcnow(),
+                    )
+                self._secure_delete(str(output_path))
+                raise
 
         finally:
             # ── 6. Ham STL'i her durumda güvenle sil ─────────────

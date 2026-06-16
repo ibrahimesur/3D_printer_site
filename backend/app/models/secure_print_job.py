@@ -30,6 +30,7 @@ class SecurePrintJob(Base):
     current_layer = Column(Integer, default=0)
     total_layers = Column(Integer, default=0)              # Toplam katman sayısı (slicing sonrası)
     progress_percentage = Column(Float, default=0.0)       # 0.0 – 100.0
+    gcode_path = Column(String(500), nullable=True)
 
     # Zaman damgaları
     started_at = Column(DateTime(timezone=True), nullable=True)

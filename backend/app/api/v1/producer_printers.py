@@ -200,46 +200,6 @@ def get_printer(
     return _profile_to_response(profile)
 
 
-@router.put("/{printer_id}", response_model=PrinterProfileResponse)
-def update_printer(
-    printer_id: int,
-    payload: PrinterProfileUpdate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Var olan bir yazıcı profilini günceller."""
-    _require_producer(current_user)
-
-    profile = (
-        db.query(PrinterProfile)
-        .filter(PrinterProfile.id == printer_id, PrinterProfile.user_id == current_user.id)
-        .first()
-    )
-    if not profile:
-        raise HTTPException(status_code=404, detail="Yazıcı profili bulunamadı")
-
-    update_data = payload.model_dump(exclude_unset=True)
-
-    # api_token ayrı işlenir (şifreleme gerekli)
-    if "api_token" in update_data:
-        raw_token = update_data.pop("api_token")
-        profile.api_token_encrypted = encrypt_token(raw_token) if raw_token else None
-
-    # filament_slots dict listesine dönüştür
-    if "filament_slots" in update_data and update_data["filament_slots"] is not None:
-        update_data["filament_slots"] = [
-            s.model_dump() if hasattr(s, "model_dump") else s
-            for s in update_data["filament_slots"]
-        ]
-
-    for key, value in update_data.items():
-        setattr(profile, key, value)
-
-    db.commit()
-    db.refresh(profile)
-    return _profile_to_response(profile)
-
-
 @router.put("/setup", response_model=PrinterProfileResponse)
 def setup_printer(
     payload: PrinterProfileCreate,
@@ -279,6 +239,46 @@ def setup_printer(
             is_active=True,
         )
         db.add(profile)
+
+    db.commit()
+    db.refresh(profile)
+    return _profile_to_response(profile)
+
+
+@router.put("/{printer_id}", response_model=PrinterProfileResponse)
+def update_printer(
+    printer_id: int,
+    payload: PrinterProfileUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Var olan bir yazıcı profilini günceller."""
+    _require_producer(current_user)
+
+    profile = (
+        db.query(PrinterProfile)
+        .filter(PrinterProfile.id == printer_id, PrinterProfile.user_id == current_user.id)
+        .first()
+    )
+    if not profile:
+        raise HTTPException(status_code=404, detail="Yazıcı profili bulunamadı")
+
+    update_data = payload.model_dump(exclude_unset=True)
+
+    # api_token ayrı işlenir (şifreleme gerekli)
+    if "api_token" in update_data:
+        raw_token = update_data.pop("api_token")
+        profile.api_token_encrypted = encrypt_token(raw_token) if raw_token else None
+
+    # filament_slots dict listesine dönüştür
+    if "filament_slots" in update_data and update_data["filament_slots"] is not None:
+        update_data["filament_slots"] = [
+            s.model_dump() if hasattr(s, "model_dump") else s
+            for s in update_data["filament_slots"]
+        ]
+
+    for key, value in update_data.items():
+        setattr(profile, key, value)
 
     db.commit()
     db.refresh(profile)

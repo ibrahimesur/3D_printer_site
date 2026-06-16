@@ -95,23 +95,23 @@ export default function ProductCard({ product }: { product: Product }) {
       </div>
 
       {/* Product Info */}
-      <div className="p-3 flex-1 flex flex-col justify-between">
+      <div className="p-2 sm:p-3 flex-1 flex flex-col justify-between">
         <div>
-          <h3 className="font-semibold text-gray-800 text-[13px] leading-tight line-clamp-2 mb-1 group-hover:text-orange-500 transition-colors">
+          <h3 className="font-semibold text-gray-800 text-[12px] sm:text-[13px] leading-tight line-clamp-2 mb-0.5 sm:mb-1 group-hover:text-orange-500 transition-colors">
             {product.title}
           </h3>
-          <div className="text-[11px] text-gray-500 mb-2 truncate">
+          <div className="text-[10px] sm:text-[11px] text-gray-500 mb-1 sm:mb-2 truncate">
             {product.category || "3D Baskı"}
           </div>
         </div>
 
-        <div className="mt-2 flex items-center justify-between">
-          <span className="text-base font-bold text-orange-500">
+        <div className="mt-1 sm:mt-2 flex items-center justify-between">
+          <span className="text-sm sm:text-base font-bold text-orange-500">
             {product.price.toLocaleString("tr-TR", { style: "currency", currency: "TRY" })}
           </span>
           <button
             onClick={handleAddToCart}
-            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-colors ${
               added
                 ? "bg-green-500 text-white"
                 : "bg-orange-50 text-orange-500 hover:bg-orange-500 hover:text-white"
@@ -119,11 +119,11 @@ export default function ProductCard({ product }: { product: Product }) {
             title="Sepete Ekle"
           >
             {added ? (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
               </svg>
             ) : (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
             )}
