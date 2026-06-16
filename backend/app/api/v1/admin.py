@@ -27,6 +27,28 @@ async def get_all_users(
         for user in users
     ]
 
+@router.get("/users/{id}/printers")
+async def get_user_printers(
+    id: int,
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_admin_user)
+):
+    """Admin'in bir kullanıcının (özellikle üreticilerin) yazıcılarını görmesini sağlar."""
+    from app.models.printer_profile import PrinterProfile
+    printers = db.query(PrinterProfile).filter(PrinterProfile.user_id == id).all()
+    return [
+        {
+            "id": p.id,
+            "brand_model": p.brand_model,
+            "nozzle_diameter": p.nozzle_diameter,
+            "api_type": p.api_type,
+            "api_url": p.api_url,
+            "filament_slots": p.filament_slots,
+            "is_active": p.is_active
+        }
+        for p in printers
+    ]
+
 @router.get("/orders")
 async def get_all_orders(
     db: Session = Depends(get_db),

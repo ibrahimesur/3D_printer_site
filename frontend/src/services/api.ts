@@ -171,6 +171,10 @@ class ApiClient {
     return this.request("/admin/users");
   }
 
+  async getAdminUserPrinters(userId: number) {
+    return this.request(`/admin/users/${userId}/printers`);
+  }
+
   async getAdminOrders() {
     return this.request("/admin/orders");
   }
