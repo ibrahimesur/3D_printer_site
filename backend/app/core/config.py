@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from typing import Optional
 
 
 class Settings(BaseSettings):
@@ -28,7 +29,6 @@ class Settings(BaseSettings):
     SLICER_TEMP_DIR: str = ""                                   # Geçici G-code dizini (boş = sistem /tmp)
 
     # SMTP Settings for Emails
-    from typing import Optional
     SMTP_HOST: Optional[str] = None
     SMTP_PORT: int = 587
     SMTP_USER: Optional[str] = None
