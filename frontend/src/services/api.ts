@@ -72,10 +72,24 @@ class ApiClient {
   }
 
   async login(email: string, password: string) {
-    return this.request("/auth/login", {
+    const formData = new URLSearchParams();
+    formData.append("username", email);
+    formData.append("password", password);
+
+    const response = await fetch(`${this.baseUrl}/auth/login`, {
       method: "POST",
-      body: { email, password },
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: formData.toString(),
     });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: "Giriş yapılamadı" }));
+      throw new Error(error.detail || `HTTP ${response.status}`);
+    }
+
+    return response.json();
   }
 
   async getCurrentUser() {
