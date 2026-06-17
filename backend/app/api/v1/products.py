@@ -41,24 +41,32 @@ def apply_image_fields(product: Product, data: dict) -> None:
         flag_modified(product, "image_urls")
 
 
-def product_to_response(product: Product) -> "ProductResponse":
+def product_to_response(product: Product, db: Optional[Session] = None) -> "ProductResponse":
     urls = list(product.image_urls or [])
     if not urls and product.image_url:
         urls = [product.image_url]
     
     file_3d_urls = []
-    creator_id = None
+    creator_id = product.creator_id
     creator_email = None
+
+    # Eğer query'de joinedload kullanıldıysa ilişkiler zaten yüklüdür
+    if hasattr(product, "creator") and product.creator:
+        creator_email = product.creator.email
+        
     if product.design_id:
-        from app.models.design import Design
-        from app.db.session import SessionLocal
-        with SessionLocal() as db:
+        if hasattr(product, "design") and product.design:
+            if product.design.file_3d_urls:
+                file_3d_urls = list(product.design.file_3d_urls)
+            if product.design.creator and not creator_email:
+                creator_email = product.design.creator.email
+        elif db:
+            from app.models.design import Design
             design = db.query(Design).filter(Design.id == product.design_id).first()
             if design:
                 if design.file_3d_urls:
                     file_3d_urls = list(design.file_3d_urls)
-                creator_id = design.creator_id
-                if design.creator:
+                if design.creator and not creator_email:
                     creator_email = design.creator.email
 
     return ProductResponse(
@@ -278,15 +286,17 @@ def delete_product(id: int, db: Session = Depends(get_db), current_admin = Depen
 @router.get("/admin/products", response_model=List[ProductResponse])
 def get_all_products(db: Session = Depends(get_db), current_admin = Depends(get_current_admin_user)):
     """Admin için tüm ürünleri (pasif olanlar dahil) listeler."""
-    products = db.query(Product).all()
-    return [product_to_response(product) for product in products]
+    from sqlalchemy.orm import joinedload
+    products = db.query(Product).options(joinedload(Product.creator), joinedload(Product.design).joinedload("creator")).all()
+    return [product_to_response(product, db) for product in products]
 
 
 # ── Public Endpoints ───────────────────────────────────────────────
 @router.get("/products", response_model=List[ProductResponse])
 def get_products(search: Optional[str] = None, db: Session = Depends(get_db)):
     """Müşteriler için aktif ürünleri listeler. İsteğe bağlı arama destekler."""
-    query = db.query(Product).filter(Product.is_active == True)
+    from sqlalchemy.orm import joinedload
+    query = db.query(Product).options(joinedload(Product.creator), joinedload(Product.design).joinedload("creator")).filter(Product.is_active == True)
     
     print(f"SEARCH PARAM RECEIVED: '{search}'")
     if search:
@@ -303,27 +313,29 @@ def get_products(search: Optional[str] = None, db: Session = Depends(get_db)):
         
     products = query.all()
     print("RETURNED COUNT:", len(products))
-    return [product_to_response(product) for product in products]
+    return [product_to_response(product, db) for product in products]
 
 
 @router.get("/products/{id}/similar", response_model=List[ProductResponse])
 def get_similar_products(id: int, db: Session = Depends(get_db)):
     """Aynı kategorideki diğer aktif ürünleri döner."""
-    product = db.query(Product).filter(Product.id == id, Product.is_active == True).first()
+    from sqlalchemy.orm import joinedload
+    product = db.query(Product).options(joinedload(Product.creator), joinedload(Product.design).joinedload("creator")).filter(Product.id == id, Product.is_active == True).first()
     if not product:
         raise HTTPException(status_code=404, detail="Ürün bulunamadı")
 
-    query = db.query(Product).filter(Product.is_active == True, Product.id != id)
+    query = db.query(Product).options(joinedload(Product.creator), joinedload(Product.design).joinedload("creator")).filter(Product.is_active == True, Product.id != id)
     if product.category:
         query = query.filter(Product.category == product.category)
 
-    return [product_to_response(item) for item in query.order_by(Product.created_at.desc()).limit(4).all()]
+    return [product_to_response(item, db) for item in query.order_by(Product.created_at.desc()).limit(4).all()]
 
 
 @router.get("/products/{id}", response_model=ProductResponse)
 def get_product(id: int, db: Session = Depends(get_db)):
     """Müşteriler için tek bir ürünün detayını getirir."""
-    product = db.query(Product).filter(Product.id == id, Product.is_active == True).first()
+    from sqlalchemy.orm import joinedload
+    product = db.query(Product).options(joinedload(Product.creator), joinedload(Product.design).joinedload("creator")).filter(Product.id == id, Product.is_active == True).first()
     if not product:
         raise HTTPException(status_code=404, detail="Ürün bulunamadı")
-    return product_to_response(product)
+    return product_to_response(product, db)
