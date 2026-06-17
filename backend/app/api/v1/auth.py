@@ -135,12 +135,19 @@ async def forgot_password(data: ForgotPasswordRequest, db: Session = Depends(get
     )
 
     # Gerçek üretimde bu token e-posta ile gönderilir.
-    # Şimdilik token'ı döndürüyoruz.
-    return {
-        "message": "Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.",
-        "reset_token": reset_token,
-    }
+    from app.core.email import send_reset_password_email
+    email_sent = send_reset_password_email(user.email, reset_token)
 
+    if not email_sent:
+        # Eğer SMTP ayarları eksikse dev ortamı için token'ı döndürmeye devam edelim ki testi engellemesin
+        return {
+            "message": "Şifre sıfırlama bağlantısı oluşturuldu (E-posta gönderilemedi, konsolu kontrol edin).",
+            "reset_token": reset_token,
+        }
+
+    return {
+        "message": "Şifre sıfırlama bağlantısı e-posta adresinize gönderildi."
+    }
 
 @router.post("/reset-password")
 async def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
