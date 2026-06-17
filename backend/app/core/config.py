@@ -26,6 +26,13 @@ class Settings(BaseSettings):
     SLICER_BINARY: str = "prusa-slicer"                         # CLI çalıştırılabilir dosya yolu
     SLICER_PROFILES_DIR: str = "slicer_profiles"                # Yazıcı profil dosyalarının bulunduğu dizin
     SLICER_TEMP_DIR: str = ""                                   # Geçici G-code dizini (boş = sistem /tmp)
+
+    # SMTP Settings for Emails
+    from typing import Optional
+    SMTP_HOST: Optional[str] = None
+    SMTP_PORT: int = 587
+    SMTP_USER: Optional[str] = None
+    SMTP_PASSWORD: Optional[str] = None
     
     class Config:
         env_file = ".env"
