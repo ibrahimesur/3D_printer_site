@@ -17,10 +17,11 @@ from app.api.v1.router import api_router
 async def lifespan(app: FastAPI):
     """Uygulama başlarken eksik şema güncellemelerini uygula."""
     try:
-        from app.db.migrate import ensure_product_image_urls_column, ensure_secure_print_jobs_gcode_path_column, ensure_product_color_and_filament_type_columns
+        from app.db.migrate import ensure_product_image_urls_column, ensure_secure_print_jobs_gcode_path_column, ensure_product_color_and_filament_type_columns, ensure_product_creator_id_column
         ensure_product_image_urls_column()
         ensure_secure_print_jobs_gcode_path_column()
         ensure_product_color_and_filament_type_columns()
+        ensure_product_creator_id_column()
     except Exception as exc:
         print(f"Şema migrasyonu atlandı: {exc}")
         

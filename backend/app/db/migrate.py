@@ -61,3 +61,11 @@ def ensure_product_color_and_filament_type_columns() -> None:
             conn.execute(text("ALTER TABLE products ADD COLUMN filament_type VARCHAR(50)"))
             print("filament_type sütunu products tablosuna eklendi.")
 
+
+def ensure_product_creator_id_column() -> None:
+    """products tablosuna creator_id sütununu ekler."""
+    if not _column_exists("products", "creator_id"):
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE products ADD COLUMN creator_id INTEGER REFERENCES users(id)"))
+            print("creator_id sütunu products tablosuna eklendi.")
+
