@@ -287,7 +287,8 @@ def delete_product(id: int, db: Session = Depends(get_db), current_admin = Depen
 def get_all_products(db: Session = Depends(get_db), current_admin = Depends(get_current_admin_user)):
     """Admin için tüm ürünleri (pasif olanlar dahil) listeler."""
     from sqlalchemy.orm import joinedload
-    products = db.query(Product).options(joinedload(Product.creator), joinedload(Product.design).joinedload("creator")).all()
+    from app.models.design import Design
+    products = db.query(Product).options(joinedload(Product.creator), joinedload(Product.design).joinedload(Design.creator)).all()
     return [product_to_response(product, db) for product in products]
 
 
@@ -296,7 +297,8 @@ def get_all_products(db: Session = Depends(get_db), current_admin = Depends(get_
 def get_products(search: Optional[str] = None, db: Session = Depends(get_db)):
     """Müşteriler için aktif ürünleri listeler. İsteğe bağlı arama destekler."""
     from sqlalchemy.orm import joinedload
-    query = db.query(Product).options(joinedload(Product.creator), joinedload(Product.design).joinedload("creator")).filter(Product.is_active == True)
+    from app.models.design import Design
+    query = db.query(Product).options(joinedload(Product.creator), joinedload(Product.design).joinedload(Design.creator)).filter(Product.is_active == True)
     
     print(f"SEARCH PARAM RECEIVED: '{search}'")
     if search:
@@ -320,11 +322,12 @@ def get_products(search: Optional[str] = None, db: Session = Depends(get_db)):
 def get_similar_products(id: int, db: Session = Depends(get_db)):
     """Aynı kategorideki diğer aktif ürünleri döner."""
     from sqlalchemy.orm import joinedload
-    product = db.query(Product).options(joinedload(Product.creator), joinedload(Product.design).joinedload("creator")).filter(Product.id == id, Product.is_active == True).first()
+    from app.models.design import Design
+    product = db.query(Product).options(joinedload(Product.creator), joinedload(Product.design).joinedload(Design.creator)).filter(Product.id == id, Product.is_active == True).first()
     if not product:
         raise HTTPException(status_code=404, detail="Ürün bulunamadı")
 
-    query = db.query(Product).options(joinedload(Product.creator), joinedload(Product.design).joinedload("creator")).filter(Product.is_active == True, Product.id != id)
+    query = db.query(Product).options(joinedload(Product.creator), joinedload(Product.design).joinedload(Design.creator)).filter(Product.is_active == True, Product.id != id)
     if product.category:
         query = query.filter(Product.category == product.category)
 
@@ -335,7 +338,8 @@ def get_similar_products(id: int, db: Session = Depends(get_db)):
 def get_product(id: int, db: Session = Depends(get_db)):
     """Müşteriler için tek bir ürünün detayını getirir."""
     from sqlalchemy.orm import joinedload
-    product = db.query(Product).options(joinedload(Product.creator), joinedload(Product.design).joinedload("creator")).filter(Product.id == id, Product.is_active == True).first()
+    from app.models.design import Design
+    product = db.query(Product).options(joinedload(Product.creator), joinedload(Product.design).joinedload(Design.creator)).filter(Product.id == id, Product.is_active == True).first()
     if not product:
         raise HTTPException(status_code=404, detail="Ürün bulunamadı")
     return product_to_response(product, db)
