@@ -10,6 +10,8 @@ const navigation = [
   { name: "Kullanıcılar", href: "/admin/users" },
   { name: "Siparişler", href: "/admin/orders" },
   { name: "Ürünler", href: "/admin/products" },
+  { name: "Tasarımlar", href: "/admin/designs" },
+  { name: "Yazıcı Kurulumu", href: "/producer/onboarding" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
