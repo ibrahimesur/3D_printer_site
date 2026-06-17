@@ -894,6 +894,20 @@ export default function AdminProductsPage() {
                               <p className="text-sm font-medium text-gray-900 truncate">{filename}</p>
                               <p className="text-xs text-gray-500">STL / 3D Dosya (Güvenli Depo)</p>
                             </div>
+                            {resolved && (
+                              <a
+                                href={resolved}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                download={filename}
+                                className="ml-3 inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg text-orange-700 bg-orange-100 hover:bg-orange-200 transition-colors"
+                              >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                İndir
+                              </a>
+                            )}
                           </div>
                         );
                       })}
