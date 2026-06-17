@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, JSON, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, JSON, ForeignKey, Text
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.db.base import Base
@@ -9,7 +9,7 @@ class Product(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(100), nullable=False, index=True)
-    description = Column(String(500), nullable=True)
+    description = Column(Text, nullable=True)
     price = Column(Float, nullable=False)
     category = Column(String(50), nullable=True, index=True)
     filament_type = Column(String(50), nullable=True)  # PLA, PETG vs.
