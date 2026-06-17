@@ -41,10 +41,34 @@ def apply_image_fields(product: Product, data: dict) -> None:
         flag_modified(product, "image_urls")
 
 
-def product_to_response(product: Product) -> "ProductResponse":
+def product_to_response(product: Product, db: Optional[Session] = None) -> "ProductResponse":
     urls = list(product.image_urls or [])
     if not urls and product.image_url:
         urls = [product.image_url]
+    
+    file_3d_urls = []
+    creator_id = product.creator_id
+    creator_email = None
+
+    # Eğer query'de joinedload kullanıldıysa ilişkiler zaten yüklüdür
+    if hasattr(product, "creator") and product.creator:
+        creator_email = product.creator.email
+        
+    if product.design_id:
+        if hasattr(product, "design") and product.design:
+            if product.design.file_3d_urls:
+                file_3d_urls = list(product.design.file_3d_urls)
+            if product.design.creator and not creator_email:
+                creator_email = product.design.creator.email
+        elif db:
+            from app.models.design import Design
+            design = db.query(Design).filter(Design.id == product.design_id).first()
+            if design:
+                if design.file_3d_urls:
+                    file_3d_urls = list(design.file_3d_urls)
+                if design.creator and not creator_email:
+                    creator_email = design.creator.email
+
     return ProductResponse(
         id=product.id,
         title=product.title,
@@ -52,9 +76,13 @@ def product_to_response(product: Product) -> "ProductResponse":
         price=product.price,
         category=product.category,
         filament_type=product.filament_type,
+        color=product.color,
         image_url=urls[0] if urls else product.image_url,
         image_urls=urls,
+        file_3d_urls=file_3d_urls,
         is_active=product.is_active,
+        creator_id=creator_id,
+        creator_email=creator_email
     )
 
 
@@ -65,8 +93,10 @@ class ProductCreate(BaseModel):
     price: float
     category: Optional[str] = None
     filament_type: Optional[str] = None
+    color: Optional[str] = None
     image_url: Optional[str] = None
     image_urls: List[str] = []
+    file_3d_urls: List[str] = []
     is_active: bool = True
 
     @field_validator("image_urls", mode="before")
@@ -83,8 +113,10 @@ class ProductUpdate(BaseModel):
     price: Optional[float] = None
     category: Optional[str] = None
     filament_type: Optional[str] = None
+    color: Optional[str] = None
     image_url: Optional[str] = None
     image_urls: Optional[List[str]] = None
+    file_3d_urls: Optional[List[str]] = None
     is_active: Optional[bool] = None
 
 
@@ -95,9 +127,13 @@ class ProductResponse(BaseModel):
     price: float
     category: Optional[str] = None
     filament_type: Optional[str] = None
+    color: Optional[str] = None
     image_url: Optional[str] = None
     image_urls: List[str] = []
+    file_3d_urls: List[str] = []
     is_active: bool
+    creator_id: Optional[int] = None
+    creator_email: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -110,9 +146,31 @@ def create_product(product: ProductCreate, db: Session = Depends(get_db), curren
     product_data = normalize_image_fields(product.model_dump())
     image_urls = product_data.pop("image_urls", [])
     image_url = product_data.pop("image_url", None)
+    file_3d_urls = product_data.pop("file_3d_urls", [])
+
+    design_id = None
+    if file_3d_urls:
+        from app.models.design import Design
+        new_design = Design(
+            title=product.title,
+            description=product.description,
+            suggested_price=product.price,
+            image_urls=image_urls,
+            file_3d_urls=file_3d_urls,
+            creator_id=current_admin.id,
+            is_approved=True,
+            category=product.category,
+            filament_type=product.filament_type,
+            color=product.color
+        )
+        db.add(new_design)
+        db.flush()
+        design_id = new_design.id
+
     db_product = Product(**product_data)
     db_product.image_urls = image_urls
     db_product.image_url = image_url
+    db_product.design_id = design_id
     db.add(db_product)
     db.commit()
     db.refresh(db_product)
@@ -135,6 +193,43 @@ def update_product(id: int, product: ProductUpdate, db: Session = Depends(get_db
         if k in update_data
     }
 
+    if "file_3d_urls" in update_data:
+        file_3d_urls = update_data.pop("file_3d_urls")
+        if db_product.design_id:
+            from app.models.design import Design
+            design = db.query(Design).filter(Design.id == db_product.design_id).first()
+            if design:
+                design.file_3d_urls = file_3d_urls
+        elif file_3d_urls:
+            from app.models.design import Design
+            new_design = Design(
+                title=db_product.title,
+                description=db_product.description,
+                suggested_price=db_product.price,
+                image_urls=db_product.image_urls,
+                file_3d_urls=file_3d_urls,
+                creator_id=current_admin.id,
+                is_approved=True,
+                category=db_product.category,
+                filament_type=db_product.filament_type,
+                color=db_product.color
+            )
+            db.add(new_design)
+            db.flush()
+            db_product.design_id = new_design.id
+
+    # Find removed images to delete from Supabase
+    if "image_urls" in image_payload:
+        old_images = set(db_product.image_urls or [])
+        new_images = set(image_payload["image_urls"] or [])
+        removed_images = list(old_images - new_images)
+        if removed_images:
+            try:
+                from app.core.supabase_utils import delete_supabase_files
+                delete_supabase_files("product-images", removed_images)
+            except Exception as e:
+                print(f"Failed to delete removed images from Supabase: {e}")
+
     for key, value in update_data.items():
         setattr(db_product, key, value)
 
@@ -148,49 +243,103 @@ def update_product(id: int, product: ProductUpdate, db: Session = Depends(get_db
 
 @router.delete("/admin/products/{id}")
 def delete_product(id: int, db: Session = Depends(get_db), current_admin = Depends(get_current_admin_user)):
-    """Bir ürünü pasife alır (Sadece admin)."""
+    """Aktif ürünü pasife alır, zaten pasif olan ürünü kalıcı olarak siler."""
     db_product = db.query(Product).filter(Product.id == id).first()
     if not db_product:
         raise HTTPException(status_code=404, detail="Ürün bulunamadı")
 
-    db_product.is_active = False
-    db.commit()
-    return {"message": "Ürün başarıyla pasife alındı"}
+    if db_product.is_active:
+        db_product.is_active = False
+        db.commit()
+        return {"message": "Ürün başarıyla pasife alındı"}
+    else:
+        # Product is passive, delete permanently
+        try:
+            from app.core.supabase_utils import delete_supabase_files
+            if db_product.image_urls:
+                delete_supabase_files("product-images", db_product.image_urls)
+            # Find associated design to delete STLs
+            if db_product.design_id:
+                from app.models.design import Design
+                design = db.query(Design).filter(Design.id == db_product.design_id).first()
+                if design and design.file_3d_urls:
+                    delete_supabase_files("product-stls", design.file_3d_urls)
+                    # Delete the design record as well to avoid dangling references
+                    db.delete(design)
+        except Exception as e:
+            print(f"Failed to delete product files from Supabase: {e}")
+
+        try:
+            db.delete(db_product)
+            db.commit()
+            return {"message": "Ürün ve ilgili dosyaları kalıcı olarak silindi"}
+        except Exception as e:
+            db.rollback()
+            if "ForeignKeyViolation" in str(e) or "IntegrityError" in str(type(e)):
+                raise HTTPException(
+                    status_code=400, 
+                    detail="Bu ürün aktif siparişlerde veya sepetlerde bulunduğu için kalıcı olarak silinemez, pasif durumda kalması gereklidir."
+                )
+            raise HTTPException(status_code=500, detail="Ürün silinirken bir hata oluştu: " + str(e))
 
 
 @router.get("/admin/products", response_model=List[ProductResponse])
 def get_all_products(db: Session = Depends(get_db), current_admin = Depends(get_current_admin_user)):
     """Admin için tüm ürünleri (pasif olanlar dahil) listeler."""
-    products = db.query(Product).all()
-    return [product_to_response(product) for product in products]
+    from sqlalchemy.orm import joinedload
+    from app.models.design import Design
+    products = db.query(Product).options(joinedload(Product.creator), joinedload(Product.design).joinedload(Design.creator)).all()
+    return [product_to_response(product, db) for product in products]
 
 
 # ── Public Endpoints ───────────────────────────────────────────────
 @router.get("/products", response_model=List[ProductResponse])
-def get_products(db: Session = Depends(get_db)):
-    """Müşteriler için aktif ürünleri listeler."""
-    products = db.query(Product).filter(Product.is_active == True).all()
-    return [product_to_response(product) for product in products]
+def get_products(search: Optional[str] = None, db: Session = Depends(get_db)):
+    """Müşteriler için aktif ürünleri listeler. İsteğe bağlı arama destekler."""
+    from sqlalchemy.orm import joinedload
+    from app.models.design import Design
+    query = db.query(Product).options(joinedload(Product.creator), joinedload(Product.design).joinedload(Design.creator)).filter(Product.is_active == True)
+    
+    print(f"SEARCH PARAM RECEIVED: '{search}'")
+    if search:
+        from sqlalchemy import or_
+        search_term = f"%{search}%"
+        query = query.filter(
+            or_(
+                Product.title.ilike(search_term),
+                Product.description.ilike(search_term),
+                Product.category.ilike(search_term)
+            )
+        )
+        print("SQL QUERY:", str(query))
+        
+    products = query.all()
+    print("RETURNED COUNT:", len(products))
+    return [product_to_response(product, db) for product in products]
 
 
 @router.get("/products/{id}/similar", response_model=List[ProductResponse])
 def get_similar_products(id: int, db: Session = Depends(get_db)):
     """Aynı kategorideki diğer aktif ürünleri döner."""
-    product = db.query(Product).filter(Product.id == id, Product.is_active == True).first()
+    from sqlalchemy.orm import joinedload
+    from app.models.design import Design
+    product = db.query(Product).options(joinedload(Product.creator), joinedload(Product.design).joinedload(Design.creator)).filter(Product.id == id, Product.is_active == True).first()
     if not product:
         raise HTTPException(status_code=404, detail="Ürün bulunamadı")
 
-    query = db.query(Product).filter(Product.is_active == True, Product.id != id)
+    query = db.query(Product).options(joinedload(Product.creator), joinedload(Product.design).joinedload(Design.creator)).filter(Product.is_active == True, Product.id != id)
     if product.category:
         query = query.filter(Product.category == product.category)
 
-    return [product_to_response(item) for item in query.order_by(Product.created_at.desc()).limit(4).all()]
+    return [product_to_response(item, db) for item in query.order_by(Product.created_at.desc()).limit(4).all()]
 
 
 @router.get("/products/{id}", response_model=ProductResponse)
 def get_product(id: int, db: Session = Depends(get_db)):
     """Müşteriler için tek bir ürünün detayını getirir."""
-    product = db.query(Product).filter(Product.id == id, Product.is_active == True).first()
+    from sqlalchemy.orm import joinedload
+    from app.models.design import Design
+    product = db.query(Product).options(joinedload(Product.creator), joinedload(Product.design).joinedload(Design.creator)).filter(Product.id == id, Product.is_active == True).first()
     if not product:
         raise HTTPException(status_code=404, detail="Ürün bulunamadı")
-    return product_to_response(product)
+    return product_to_response(product, db)

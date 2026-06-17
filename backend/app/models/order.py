@@ -1,4 +1,5 @@
 import enum
+from typing import Optional
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, Enum as SAEnum, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -9,6 +10,7 @@ from app.db.base import Base
 class OrderStatus(str, enum.Enum):
     """Sipariş durumları."""
     PENDING = "pending"
+    PAID = "paid"
     QUOTED = "quoted"
     ACCEPTED = "accepted"
     PRINTING = "printing"
@@ -38,6 +40,12 @@ class Order(Base):
     customer = relationship("User", back_populates="customer_orders", foreign_keys=[customer_id])
     producer = relationship("User", back_populates="producer_orders", foreign_keys=[producer_id])
     product = relationship("Product")
+
+    @property
+    def print_job_id(self) -> Optional[int]:
+        if self.print_jobs:
+            return self.print_jobs[0].id
+        return None
 
     def __repr__(self):
         return f"<Order(id={self.id}, product_id={self.product_id}, status={self.status}, price={self.total_price})>"

@@ -14,6 +14,15 @@ import 'react-image-crop/dist/ReactCrop.css';
 import getCroppedImg from '@/utils/cropImage';
 import { getPrimaryProductImage, getProductImages } from '@/lib/productImages';
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:8001';
+
+/** Relative upload paths → absolute URLs */
+function resolveFileUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (url.startsWith('http')) return url;
+  return `${BACKEND_URL}${url}`;
+}
+
 interface Product {
   id: number;
   title: string;
@@ -21,9 +30,14 @@ interface Product {
   price: number;
   category: string | null;
   filament_type: string | null;
+  color: string | null;
   image_url: string | null;
   image_urls?: string[];
+  file_3d_urls?: string[];
   is_active: boolean;
+  is_design?: boolean;
+  creator_id?: number;
+  creator_email?: string;
 }
 
 interface ProductFormData {
@@ -32,7 +46,9 @@ interface ProductFormData {
   price: number | "";
   category: string;
   filament_type: string;
+  color: string;
   image_urls: string[];
+  file_3d_urls: string[];
   is_active: boolean;
 }
 
@@ -52,11 +68,14 @@ export default function AdminProductsPage() {
     price: "",
     category: "",
     filament_type: "",
+    color: "",
     image_urls: [],
+    file_3d_urls: [],
     is_active: true,
   });
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploading3d, setUploading3d] = useState(false);
   
   // Crop state
   const [cropModalOpen, setCropModalOpen] = useState(false);
@@ -65,6 +84,10 @@ export default function AdminProductsPage() {
   const [completedCrop, setCompletedCrop] = useState<PixelCrop | null>(null);
   const [imageRef, setImageRef] = useState<HTMLImageElement | null>(null);
   const [isCropping, setIsCropping] = useState(false);
+
+  // Design Preview Modal state
+  const [previewDesign, setPreviewDesign] = useState<Product | null>(null);
+  const [previewImageIndex, setPreviewImageIndex] = useState(0);
 
   const onFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -82,7 +105,7 @@ export default function AdminProductsPage() {
   const onCropImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const { width, height } = e.currentTarget;
     const percentCrop = centerCrop(
-      makeAspectCrop({ unit: '%', width: 90 }, 3 / 4, width, height),
+      makeAspectCrop({ unit: '%', width: 90 }, 1, width, height),
       width,
       height
     );
@@ -124,6 +147,33 @@ export default function AdminProductsPage() {
     }
   };
 
+  const on3dFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    try {
+      setUploading3d(true);
+      const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '')}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('product-stls')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage.from('product-stls').getPublicUrl(fileName);
+      
+      setFormData((prev) => ({
+        ...prev,
+        file_3d_urls: [data.publicUrl], // just keep one 3d file for simplicity
+      }));
+    } catch (error: any) {
+      alert("3D Dosya yüklenirken hata: " + error.message);
+    } finally {
+      setUploading3d(false);
+      if (e.target) e.target.value = '';
+    }
+  };
+
   const cancelCrop = () => {
     setCropModalOpen(false);
     setImageToCrop(null);
@@ -137,12 +187,55 @@ export default function AdminProductsPage() {
     try {
       setLoading(true);
       const data = await api.getAdminProducts() as Product[];
-      setProducts(data);
+      try {
+        const pendingDesigns = await api.getAdminPendingDesigns() as Product[];
+        const formattedDesigns = pendingDesigns.map(d => ({
+          ...d,
+          is_design: true,
+          is_active: false,
+          category: d.category || "Tasarım",
+          filament_type: d.filament_type || null,
+          color: d.color || null
+        }));
+        setProducts([...formattedDesigns, ...data]);
+      } catch (err) {
+        console.error("Tasarımlar yüklenirken hata:", err);
+        setProducts(data);
+      }
     } catch (err) {
       console.error("Ürünler yüklenirken hata:", err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleApproveDesign = async (id: number) => {
+    if (!window.confirm("Bu tasarımı onaylayıp mağazada ürüne dönüştürmek istediğinize emin misiniz?")) return;
+    try {
+      await api.approveAdminDesign(id);
+      setPreviewDesign(null);
+      fetchProducts();
+      alert("Tasarım başarıyla onaylandı ve ürünlere eklendi!");
+    } catch (err: any) {
+      alert("Onaylanırken hata oluştu: " + err.message);
+    }
+  };
+
+  const handleRejectDesign = async (id: number) => {
+    if (!window.confirm("Bu tasarımı reddetmek istediğinize emin misiniz? Bu işlem geri alınamaz.")) return;
+    try {
+      await api.rejectAdminDesign(id);
+      setPreviewDesign(null);
+      fetchProducts();
+      alert("Tasarım reddedildi.");
+    } catch (err: any) {
+      alert("Reddedilirken hata oluştu: " + err.message);
+    }
+  };
+
+  const openDesignPreview = (product: Product) => {
+    setPreviewImageIndex(0);
+    setPreviewDesign(product);
   };
 
   const openModal = (product?: Product) => {
@@ -154,7 +247,9 @@ export default function AdminProductsPage() {
         price: Number(product.price),
         category: product.category || "",
         filament_type: product.filament_type || "",
+        color: product.color || "",
         image_urls: getProductImages(product),
+        file_3d_urls: product.file_3d_urls || [],
         is_active: product.is_active,
       });
     } else {
@@ -165,7 +260,9 @@ export default function AdminProductsPage() {
         price: "",
         category: "",
         filament_type: "",
+        color: "",
         image_urls: [],
+        file_3d_urls: [],
         is_active: true,
       });
     }
@@ -181,6 +278,13 @@ export default function AdminProductsPage() {
     setFormData((prev) => ({
       ...prev,
       image_urls: prev.image_urls.filter((_, i) => i !== index),
+    }));
+  };
+
+  const remove3dFile = () => {
+    setFormData((prev) => ({
+      ...prev,
+      file_3d_urls: [],
     }));
   };
 
@@ -224,6 +328,7 @@ export default function AdminProductsPage() {
       price,
       category: formData.category,
       filament_type: formData.filament_type,
+      color: formData.color,
       is_active: formData.is_active,
       image_urls: [...formData.image_urls],
       image_url: formData.image_urls[0] || null,
@@ -255,7 +360,12 @@ export default function AdminProductsPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Bu ürünü pasife almak istediğinize emin misiniz?")) return;
+    const product = products.find(p => p.id === id);
+    const isPassive = product && !product.is_active;
+    const msg = isPassive
+      ? "Bu ürün zaten pasif. Kalıcı olarak silmek istediğinize emin misiniz? Bu işlem geri alınamaz."
+      : "Bu ürünü pasife almak istediğinize emin misiniz?";
+    if (!window.confirm(msg)) return;
     try {
       await api.deleteProduct(id);
       fetchProducts();
@@ -318,6 +428,7 @@ export default function AdminProductsPage() {
                   <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Ürün</th>
                   <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Fiyat</th>
                   <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Kategori / Filament</th>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Yükleyen</th>
                   <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Durum</th>
                   <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">İşlemler</th>
                 </tr>
@@ -325,23 +436,28 @@ export default function AdminProductsPage() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500">Yükleniyor...</td>
+                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">Yükleniyor...</td>
                   </tr>
                 ) : filteredProducts.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500">Bu kategoriye ait ürün bulunmuyor.</td>
+                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">Bu kategoriye ait ürün bulunmuyor.</td>
                   </tr>
                 ) : (
                   filteredProducts.map((product) => (
-                    <tr key={product.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={product.is_design ? `design-${product.id}` : `product-${product.id}`} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="h-12 w-12 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden flex justify-center items-center">
-                            {getPrimaryProductImage(product) ? (
-                              <img className="h-12 w-12 object-cover" src={getPrimaryProductImage(product)!} alt="" />
-                            ) : (
-                              <span className="text-gray-400 text-xs">Görsel</span>
-                            )}
+                            {(() => {
+                              const src = product.is_design
+                                ? resolveFileUrl((product.image_urls || [])[0])
+                                : getPrimaryProductImage(product);
+                              return src ? (
+                                <img className="h-12 w-12 object-cover" src={src} alt="" />
+                              ) : (
+                                <span className="text-gray-400 text-xs">Görsel</span>
+                              );
+                            })()}
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">{product.title}</div>
@@ -357,17 +473,67 @@ export default function AdminProductsPage() {
                         <div className="text-xs text-gray-500">{product.filament_type || "-"}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          product.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {product.is_active ? 'Aktif' : 'Pasif'}
-                        </span>
+                        <div className="text-sm text-gray-900">
+                          {product.creator_email || product.creator_id ? (
+                            <span className="inline-flex items-center gap-1.5">
+                              <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                              {product.creator_email || `Üretici #${product.creator_id}`}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 text-orange-600 font-medium">
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                              </svg>
+                              Sistem (Admin)
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {product.is_design ? (
+                          <span className="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                            Onay Bekliyor
+                          </span>
+                        ) : (
+                          <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            product.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {product.is_active ? 'Aktif' : 'Pasif'}
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button onClick={() => openModal(product)} className="text-indigo-600 hover:text-indigo-900 mr-4">Düzenle</button>
-                        <button onClick={() => handleDelete(product.id)} className="text-red-600 hover:text-red-900" disabled={!product.is_active}>
-                          Kaldır
-                        </button>
+                        {product.is_design ? (
+                          <div className="flex items-center gap-3 justify-end">
+                            <button 
+                              onClick={() => openDesignPreview(product)} 
+                              className="text-blue-600 hover:text-blue-900 font-medium"
+                            >
+                              Önizle
+                            </button>
+                            <button 
+                              onClick={() => handleApproveDesign(product.id)} 
+                              className="text-green-600 hover:text-green-900 font-bold"
+                            >
+                              Onayla
+                            </button>
+                            <button 
+                              onClick={() => handleRejectDesign(product.id)} 
+                              className="text-red-600 hover:text-red-900 font-bold"
+                            >
+                              Reddet
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <button onClick={() => openModal(product)} className="text-indigo-600 hover:text-indigo-900 mr-4">Düzenle</button>
+                            <button onClick={() => handleDelete(product.id)} className="text-red-600 hover:text-red-900">
+                              Kaldır
+                            </button>
+                          </>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -383,16 +549,21 @@ export default function AdminProductsPage() {
         <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
           <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             {/* Background overlay */}
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={closeModal}></div>
+            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" aria-hidden="true" onClick={closeModal}></div>
 
             <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
-            <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl w-full">
+            <div className="inline-block align-bottom bg-white rounded-2xl text-left shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl w-full ring-1 ring-slate-200">
               <form onSubmit={handleSubmit}>
-                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  <h3 className="text-lg leading-6 font-bold text-gray-900 mb-6" id="modal-title">
-                    {editingProduct ? 'Ürünü Düzenle' : 'Yeni Ürün Ekle'}
-                  </h3>
+                <div className="bg-white px-6 pt-6 pb-6 sm:p-8 rounded-t-2xl">
+                  <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
+                    <h3 className="text-xl leading-6 font-bold text-slate-800" id="modal-title">
+                      {editingProduct ? 'Ürünü Düzenle' : 'Yeni Ürün Ekle'}
+                    </h3>
+                    <button type="button" onClick={closeModal} className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-md hover:bg-slate-100">
+                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                  </div>
                   
                   <div className="space-y-4">
                     <div>
@@ -430,7 +601,7 @@ export default function AdminProductsPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-3 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Filament Türü</label>
                         <select name="filament_type" value={formData.filament_type} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 bg-white">
@@ -439,6 +610,24 @@ export default function AdminProductsPage() {
                           <option value="PETG">PETG</option>
                           <option value="ABS">ABS</option>
                           <option value="TPU">TPU (Esnek)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Renk</label>
+                        <select name="color" value={formData.color} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 bg-white">
+                          <option value="">Seçiniz...</option>
+                          <option value="Siyah">Siyah</option>
+                          <option value="Beyaz">Beyaz</option>
+                          <option value="Gri">Gri</option>
+                          <option value="Kırmızı">Kırmızı</option>
+                          <option value="Mavi">Mavi</option>
+                          <option value="Yeşil">Yeşil</option>
+                          <option value="Sarı">Sarı</option>
+                          <option value="Turuncu">Turuncu</option>
+                          <option value="Pembe">Pembe</option>
+                          <option value="Şeffaf">Şeffaf</option>
+                          <option value="Çok Renkli">Çok Renkli</option>
+                          <option value="Diğer">Diğer</option>
                         </select>
                       </div>
                       <div className="flex items-center mt-6">
@@ -493,18 +682,54 @@ export default function AdminProductsPage() {
                         </p>
                       )}
                     </div>
+                    
+                    <div className="mt-6 border-t border-slate-100 pt-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        3D Tasarım Dosyası (STL / OBJ)
+                      </label>
+                      <label className="inline-flex cursor-pointer items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 transition-colors hover:bg-slate-50 relative overflow-hidden">
+                        {uploading3d ? "Yükleniyor..." : "3D Dosya Seç"}
+                        <input
+                          type="file"
+                          accept=".stl,.obj"
+                          onChange={on3dFileSelect}
+                          disabled={uploading3d}
+                          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                        />
+                      </label>
+                      {formData.file_3d_urls.length > 0 && (
+                        <div className="mt-3 bg-indigo-50 border border-indigo-100 rounded-lg p-3 flex justify-between items-center">
+                          <div className="flex items-center gap-2 text-sm text-indigo-700 font-medium">
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Tasarım Dosyası Yüklendi
+                          </div>
+                          <button
+                            type="button"
+                            onClick={remove3dFile}
+                            className="text-red-500 hover:text-red-700 p-1 bg-white rounded-md border border-red-100"
+                            title="Dosyayı kaldır"
+                          >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
                 
-                <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-200">
+                <div className="bg-slate-50 px-6 py-4 sm:flex sm:flex-row-reverse border-t border-slate-100 rounded-b-2xl">
                   <button
                     type="submit"
                     disabled={saving || uploadingImage || isCropping || cropModalOpen}
-                    className="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-orange-500 text-base font-medium text-white hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors disabled:opacity-50"
+                    className="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-6 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 text-base font-medium text-white hover:from-orange-600 hover:to-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 sm:ml-3 sm:w-auto sm:text-sm transition-all disabled:opacity-50"
                   >
-                    {uploadingImage ? "Görsel yükleniyor..." : saving ? "Kaydediliyor..." : "Kaydet"}
+                    {uploadingImage ? "Görsel yükleniyor..." : saving ? "Kaydediliyor..." : editingProduct ? "Değişiklikleri Kaydet" : "Ürünü Ekle"}
                   </button>
-                  <button type="button" onClick={closeModal} className="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
+                  <button type="button" onClick={closeModal} className="mt-3 w-full inline-flex justify-center rounded-xl border border-slate-300 shadow-sm px-6 py-2.5 bg-white text-base font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-all">
                     İptal
                   </button>
                 </div>
@@ -523,14 +748,15 @@ export default function AdminProductsPage() {
             <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl w-full">
               <div className="p-6">
                 <h3 className="text-lg font-bold text-gray-900 mb-4">Resmi Kırp (Köşelerden Çekin)</h3>
-                <div className="relative max-h-[60vh] w-full bg-gray-100 rounded-lg overflow-auto flex items-center justify-center border border-gray-200">
+                <div className="relative max-h-[60vh] w-full bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center border border-gray-200 p-2">
                   <ReactCrop
                     crop={crop}
                     onChange={(_, percentCrop) => setCrop(percentCrop)}
                     onComplete={(c) => setCompletedCrop(c)}
-                    aspect={3 / 4}
+                    aspect={1}
+                    className="max-w-full max-h-full flex items-center justify-center"
                   >
-                    <img src={imageToCrop} onLoad={onCropImageLoad} alt="Crop me" className="max-h-[60vh] w-auto object-contain" />
+                    <img src={imageToCrop} onLoad={onCropImageLoad} alt="Crop me" className="max-h-[55vh] max-w-full object-contain block" style={{ transform: 'translate3d(0,0,0)' }} />
                   </ReactCrop>
                 </div>
                 <div className="mt-6 flex justify-end items-center">
@@ -541,6 +767,176 @@ export default function AdminProductsPage() {
                     </button>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Design Preview Modal */}
+      {previewDesign && (
+        <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="preview-modal" role="dialog" aria-modal="true">
+          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            {/* Overlay */}
+            <div className="fixed inset-0 bg-gray-900 bg-opacity-80 transition-opacity" onClick={() => setPreviewDesign(null)}></div>
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+
+            <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl w-full">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-4 flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-bold text-white">{previewDesign.title}</h3>
+                  <p className="text-orange-100 text-sm mt-0.5">Tasarım Önizleme &mdash; Üretici #{previewDesign.creator_id}</p>
+                </div>
+                <button onClick={() => setPreviewDesign(null)} className="text-white/80 hover:text-white transition-colors">
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+                {/* Description */}
+                {previewDesign.description && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Açıklama</h4>
+                    <p className="text-gray-700 bg-gray-50 rounded-lg p-4 text-sm leading-relaxed">{previewDesign.description}</p>
+                  </div>
+                )}
+
+                {/* Price */}
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Önerilen Fiyat</h4>
+                  <p className="text-2xl font-bold text-gray-900">₺{previewDesign.price.toFixed(2)}</p>
+                </div>
+
+                {/* Images */}
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                    Görseller
+                    <span className="ml-2 text-xs font-normal text-gray-400">({(previewDesign.image_urls || []).length} adet)</span>
+                  </h4>
+                  {(previewDesign.image_urls || []).length > 0 ? (
+                    <div>
+                      {/* Main image */}
+                      <div className="relative bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center" style={{minHeight: 320}}>
+                        <img
+                          src={resolveFileUrl(previewDesign.image_urls![previewImageIndex]) || ''}
+                          alt={`Görsel ${previewImageIndex + 1}`}
+                          className="max-h-[400px] max-w-full object-contain"
+                        />
+                        {previewDesign.image_urls!.length > 1 && (
+                          <>
+                            <button
+                              onClick={() => setPreviewImageIndex((i) => (i - 1 + previewDesign.image_urls!.length) % previewDesign.image_urls!.length)}
+                              className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-colors"
+                            >
+                              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                            </button>
+                            <button
+                              onClick={() => setPreviewImageIndex((i) => (i + 1) % previewDesign.image_urls!.length)}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-colors"
+                            >
+                              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                            </button>
+                          </>
+                        )}
+                      </div>
+                      {/* Thumbnails */}
+                      {previewDesign.image_urls!.length > 1 && (
+                        <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
+                          {previewDesign.image_urls!.map((url, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => setPreviewImageIndex(idx)}
+                              className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                                idx === previewImageIndex ? 'border-orange-500 ring-2 ring-orange-200' : 'border-gray-200 hover:border-gray-400'
+                              }`}
+                            >
+                              <img src={resolveFileUrl(url) || ''} alt="" className="w-full h-full object-cover" />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 rounded-xl p-8 text-center">
+                      <svg className="w-12 h-12 mx-auto text-gray-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.41a2.25 2.25 0 013.182 0l2.909 2.91m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                      </svg>
+                      <p className="text-gray-400 text-sm">Görsel yüklenmemiş</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* 3D Files */}
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                    3D Dosyalar
+                    <span className="ml-2 text-xs font-normal text-gray-400">({(previewDesign.file_3d_urls || []).length} adet)</span>
+                  </h4>
+                  {(previewDesign.file_3d_urls || []).length > 0 ? (
+                    <div className="space-y-2">
+                      {previewDesign.file_3d_urls!.map((url, idx) => {
+                        const filename = url.split('/').pop() || `dosya_${idx + 1}`;
+                        const resolved = resolveFileUrl(url);
+                        return (
+                          <div
+                            key={idx}
+                            className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 transition-colors group"
+                          >
+                            <div className="flex-shrink-0 w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                              <svg className="w-5 h-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                              </svg>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">{filename}</p>
+                              <p className="text-xs text-gray-500">STL / 3D Dosya (Güvenli Depo)</p>
+                            </div>
+                            {resolved && (
+                              <a
+                                href={resolved}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                download={filename}
+                                className="ml-3 inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg text-orange-700 bg-orange-100 hover:bg-orange-200 transition-colors"
+                              >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                İndir
+                              </a>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 rounded-xl p-8 text-center">
+                      <svg className="w-12 h-12 mx-auto text-gray-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                      </svg>
+                      <p className="text-gray-400 text-sm">3D dosya yüklenmemiş</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-200">
+                <button
+                  onClick={() => handleRejectDesign(previewDesign.id)}
+                  className="px-5 py-2.5 text-sm font-bold text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors shadow-sm"
+                >
+                  Reddet
+                </button>
+                <button
+                  onClick={() => handleApproveDesign(previewDesign.id)}
+                  className="px-5 py-2.5 text-sm font-bold text-white bg-green-500 hover:bg-green-600 rounded-lg transition-colors shadow-sm"
+                >
+                  Onayla
+                </button>
               </div>
             </div>
           </div>

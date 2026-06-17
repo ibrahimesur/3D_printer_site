@@ -10,6 +10,8 @@ const navigation = [
   { name: "Kullanıcılar", href: "/admin/users" },
   { name: "Siparişler", href: "/admin/orders" },
   { name: "Ürünler", href: "/admin/products" },
+  { name: "Tasarımlar", href: "/admin/designs" },
+  { name: "Yazıcı Kurulumu", href: "/producer/onboarding" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -17,13 +19,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <ProtectedRoute allowedRoles={["admin"]}>
-      <div className="flex h-[calc(100vh-64px)] overflow-hidden">
+      <div className="flex h-screen overflow-hidden">
         {/* Sidebar */}
         <div className="w-64 bg-gray-900 text-white flex-shrink-0">
           <div className="h-full flex flex-col">
             <div className="flex items-center justify-center h-20 border-b border-gray-800 overflow-hidden hover:bg-gray-800 transition-colors cursor-pointer">
-              <Link href="/">
-                <img src="/printago.svg" alt="PrintAgo Logo" className="h-12 w-auto object-contain" />
+              <Link href="/" className="flex items-center gap-2 group">
+                <img src="/filamengo.png" alt="Filamengo Logo" className="h-10 w-10 object-contain" />
+                <span className="text-2xl font-black tracking-tighter text-orange-500 lowercase group-hover:text-orange-400 transition-colors">filamengo</span>
               </Link>
             </div>
             

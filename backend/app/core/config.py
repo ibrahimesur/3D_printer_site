@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from typing import Optional
 
 
 class Settings(BaseSettings):
@@ -17,6 +18,21 @@ class Settings(BaseSettings):
     
     # CORS
     FRONTEND_URL: str = "http://localhost:3000"
+
+    # Supabase (loaded from environment variables in .env)
+    SUPABASE_URL: str = ""
+    SUPABASE_KEY: str = ""
+
+    # Slicer (PrusaSlicer CLI)
+    SLICER_BINARY: str = "prusa-slicer"                         # CLI çalıştırılabilir dosya yolu
+    SLICER_PROFILES_DIR: str = "slicer_profiles"                # Yazıcı profil dosyalarının bulunduğu dizin
+    SLICER_TEMP_DIR: str = ""                                   # Geçici G-code dizini (boş = sistem /tmp)
+
+    # SMTP Settings for Emails
+    SMTP_HOST: Optional[str] = None
+    SMTP_PORT: int = 587
+    SMTP_USER: Optional[str] = None
+    SMTP_PASSWORD: Optional[str] = None
     
     class Config:
         env_file = ".env"

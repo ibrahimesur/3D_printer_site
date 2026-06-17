@@ -35,3 +35,71 @@ def ensure_product_image_urls_column() -> None:
             )
 
         print(f"image_urls sütunu eklendi, {len(rows)} ürün güncellendi.")
+
+
+def ensure_secure_print_jobs_gcode_path_column() -> None:
+    """secure_print_jobs tablosuna gcode_path sütunu ekler."""
+    if _column_exists("secure_print_jobs", "gcode_path"):
+        return
+
+    with engine.begin() as conn:
+        conn.execute(
+            text("ALTER TABLE secure_print_jobs ADD COLUMN gcode_path VARCHAR(500)")
+        )
+        print("gcode_path sütunu secure_print_jobs tablosuna eklendi.")
+
+
+def ensure_product_color_and_filament_type_columns() -> None:
+    """products tablosuna color ve filament_type sütunlarını ekler."""
+    if not _column_exists("products", "color"):
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE products ADD COLUMN color VARCHAR(50)"))
+            print("color sütunu products tablosuna eklendi.")
+            
+    if not _column_exists("products", "filament_type"):
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE products ADD COLUMN filament_type VARCHAR(50)"))
+            print("filament_type sütunu products tablosuna eklendi.")
+
+
+def ensure_product_creator_id_column() -> None:
+    """products tablosuna creator_id sütununu ekler."""
+    if not _column_exists("products", "creator_id"):
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE products ADD COLUMN creator_id INTEGER REFERENCES users(id)"))
+            print("creator_id sütunu products tablosuna eklendi.")
+
+
+def ensure_design_category_filament_color_columns() -> None:
+    """designs tablosuna category, filament_type ve color sütunlarını ekler."""
+    if not _column_exists("designs", "category"):
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE designs ADD COLUMN category VARCHAR(50)"))
+            print("category sütunu designs tablosuna eklendi.")
+            
+    if not _column_exists("designs", "filament_type"):
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE designs ADD COLUMN filament_type VARCHAR(50)"))
+            print("filament_type sütunu designs tablosuna eklendi.")
+            
+    if not _column_exists("designs", "color"):
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE designs ADD COLUMN color VARCHAR(50)"))
+            print("color sütunu designs tablosuna eklendi.")
+
+    if not _column_exists("designs", "file_3d_urls"):
+        with engine.begin() as conn:
+            if engine.dialect.name == "postgresql":
+                conn.execute(text("ALTER TABLE designs ADD COLUMN file_3d_urls JSON DEFAULT '[]'::json"))
+            else:
+                conn.execute(text("ALTER TABLE designs ADD COLUMN file_3d_urls JSON"))
+            
+            # Migrate old single file_3d_url to the new file_3d_urls list
+            rows = conn.execute(text("SELECT id, file_3d_url FROM designs WHERE file_3d_url IS NOT NULL AND file_3d_url != ''")).fetchall()
+            for row in rows:
+                conn.execute(
+                    text("UPDATE designs SET file_3d_urls = :urls WHERE id = :id"),
+                    {"id": row.id, "urls": json.dumps([row.file_3d_url])},
+                )
+            print(f"file_3d_urls sütunu designs tablosuna eklendi ve {len(rows)} satır güncellendi.")
+

@@ -36,10 +36,25 @@ class DesignResponse(BaseModel):
     royalty_percentage: float
     image_urls: list
     file_3d_url: Optional[str] = None
+    file_3d_urls: list = []
+    category: Optional[str] = None
+    filament_type: Optional[str] = None
+    color: Optional[str] = None
     is_approved: bool
 
     class Config:
         from_attributes = True
+
+
+class DesignCreate(BaseModel):
+    title: str
+    description: Optional[str] = ""
+    suggested_price: float = 0.0
+    category: Optional[str] = None
+    filament_type: Optional[str] = None
+    color: Optional[str] = None
+    image_urls: List[str] = []
+    file_3d_urls: List[str] = []
 
 
 def _require_producer(user: User):
@@ -54,64 +69,39 @@ def _require_producer(user: User):
 # ── Endpoints ─────────────────────────────────────────────────
 
 @router.post("/", response_model=DesignResponse, status_code=status.HTTP_201_CREATED)
-async def create_design(
-    title: str = Form(...),
-    description: str = Form(""),
-    suggested_price: float = Form(0.0),
-    images: List[UploadFile] = File(default=[]),
-    file_3d: Optional[UploadFile] = File(default=None),
+def create_design(
+    design: DesignCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Üreticinin yeni tasarım eklemesi, ürün fotoğraflarını ve 3D dosyasını yükler."""
+    """Üreticinin yeni tasarım eklemesi."""
     _require_producer(current_user)
 
-    saved_image_urls = []
-    saved_3d_url = None
-
-    # Save product images
-    for img in images:
-        ext = os.path.splitext(img.filename or "")[1].lower()
-        if ext not in ALLOWED_IMAGE_EXTENSIONS:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Geçersiz görsel formatı: {ext}. İzin verilen: {', '.join(ALLOWED_IMAGE_EXTENSIONS)}",
-            )
-        unique_name = f"{uuid.uuid4().hex}{ext}"
-        file_path = os.path.join(IMAGES_DIR, unique_name)
-        with open(file_path, "wb") as f:
-            shutil.copyfileobj(img.file, f)
-        saved_image_urls.append(f"/uploads/design_images/{unique_name}")
-
-    # Save 3D file
-    if file_3d and file_3d.filename:
-        ext = os.path.splitext(file_3d.filename)[1].lower()
-        if ext not in ALLOWED_3D_EXTENSIONS:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Geçersiz 3D dosya formatı: {ext}. İzin verilen: {', '.join(ALLOWED_3D_EXTENSIONS)}",
-            )
-        unique_name = f"{uuid.uuid4().hex}{ext}"
-        file_path = os.path.join(FILES_3D_DIR, unique_name)
-        with open(file_path, "wb") as f:
-            shutil.copyfileobj(file_3d.file, f)
-        saved_3d_url = f"/uploads/design_files/{unique_name}"
-
-    new_design = Design(
-        creator_id=current_user.id,
-        title=title,
-        description=description,
-        suggested_price=suggested_price,
-        royalty_percentage=10.0,  # Sitenin standart telif payı
-        image_urls=saved_image_urls,
-        file_3d_url=saved_3d_url,
-        is_approved=False,
-    )
-    db.add(new_design)
-    db.commit()
-    db.refresh(new_design)
-
-    return new_design
+    try:
+        new_design = Design(
+            creator_id=current_user.id,
+            title=design.title,
+            description=design.description,
+            suggested_price=design.suggested_price,
+            royalty_percentage=10.0,  # Sitenin standart telif payı
+            category=design.category,
+            filament_type=design.filament_type,
+            color=design.color,
+            image_urls=design.image_urls,
+            file_3d_urls=design.file_3d_urls,
+            is_approved=False,
+        )
+        db.add(new_design)
+        db.commit()
+        db.refresh(new_design)
+        return new_design
+    except Exception as e:
+        import traceback
+        err_msg = "".join(traceback.format_exception(type(e), e, e.__traceback__))
+        # Print it to Render logs just in case
+        print("CREATE_DESIGN_ERROR:", err_msg)
+        # We raise a 400 so it doesn't get swallowed by 500 handlers, and the frontend will display it!
+        raise HTTPException(status_code=400, detail=f"Hata yakalandı: {err_msg}")
 
 
 @router.get("/", response_model=List[DesignResponse])
