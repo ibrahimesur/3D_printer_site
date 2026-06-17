@@ -23,7 +23,8 @@ interface Product {
 
 interface Review {
   id: number;
-  user_email: string;
+  user_id: number;
+  user_name: string;
   rating: number;
   comment: string | null;
   created_at: string | null;
@@ -630,11 +631,13 @@ export default function ProductDetailPage() {
                     <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-                          {review.user_email[0].toUpperCase()}
+                          <span className="text-orange-500 font-bold text-sm uppercase">
+                            {(review.user_name || (review as any).user_email || 'U')[0].toUpperCase()}
+                          </span>
                         </div>
                         <div>
                           <p className="text-sm font-semibold text-text-main">
-                            {review.user_email}
+                            {review.user_name || (review as any).user_email || "İsimsiz Kullanıcı"}
                           </p>
                           {review.created_at && (
                             <p className="text-xs text-text-muted">

@@ -15,6 +15,7 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 # ── Pydantic Schemas ──────────────────────────────────────────
 class UserRegister(BaseModel):
+    full_name: str
     email: EmailStr
     password: str
     role: str = "customer"  # "customer" | "producer"
@@ -32,6 +33,7 @@ class Token(BaseModel):
 
 class UserProfile(BaseModel):
     id: int
+    full_name: str | None = None
     email: EmailStr
     role: str
 
@@ -71,6 +73,7 @@ async def register(data: UserRegister, db: Session = Depends(get_db)):
     # Create user
     hashed_password = get_password_hash(data.password)
     new_user = User(
+        full_name=data.full_name,
         email=data.email,
         hashed_password=hashed_password,
         role=user_role

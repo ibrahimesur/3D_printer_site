@@ -64,10 +64,10 @@ class ApiClient {
   }
 
   // ── Auth ──────────────────────────────────────────────────
-  async register(email: string, password: string, role: string = "customer") {
+  async register(fullName: string, email: string, password: string, role: string = "customer") {
     return this.request("/auth/register", {
       method: "POST",
-      body: { email, password, role },
+      body: { full_name: fullName, email, password, role },
     });
   }
 

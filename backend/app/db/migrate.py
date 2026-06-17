@@ -11,6 +11,14 @@ def _column_exists(table: str, column: str) -> bool:
     return column in {col["name"] for col in inspector.get_columns(table)}
 
 
+def ensure_user_full_name_column() -> None:
+    """users tablosuna full_name sütununu ekler."""
+    if not _column_exists("users", "full_name"):
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE users ADD COLUMN full_name VARCHAR(255)"))
+            print("full_name sütunu users tablosuna eklendi.")
+
+
 def ensure_product_image_urls_column() -> None:
     """products tablosuna image_urls sütunu ekler ve mevcut image_url değerlerini taşır."""
     if _column_exists("products", "image_urls"):

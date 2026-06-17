@@ -10,6 +10,7 @@ export default function RegisterPage() {
   const router = useRouter();
   
   const [role, setRole] = useState<"customer" | "producer">("customer");
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -21,7 +22,7 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      await api.register(email, password, role);
+      await api.register(fullName, email, password, role);
 
       // Automatically redirect to login after successful registration
       router.push("/auth/login");
@@ -56,6 +57,17 @@ export default function RegisterPage() {
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-text-main mb-1">İsim Soyisim</label>
+              <input
+                type="text"
+                required
+                className="appearance-none block w-full px-3 py-2 border border-border rounded-lg placeholder-text-muted focus:outline-none focus:ring-primary focus:border-primary sm:text-sm bg-background text-text-main"
+                placeholder="Ör: Ali Yılmaz"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+              />
+            </div>
             <div>
               <label className="block text-sm font-medium text-text-main mb-1">E-posta Adresi</label>
               <input

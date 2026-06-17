@@ -21,7 +21,7 @@ class ReviewResponse(BaseModel):
     id: int
     product_id: int
     user_id: int
-    user_email: str
+    user_name: str
     rating: int
     comment: Optional[str] = None
     created_at: Optional[str] = None
@@ -39,11 +39,18 @@ class ReviewSummary(BaseModel):
     purchase_required: bool = False
 
 
-def _mask_email(email: str) -> str:
-    local, _, domain = email.partition("@")
-    if len(local) <= 1:
-        return f"*@{domain}"
-    return f"{local[0]}***@{domain}"
+def _mask_name(name: str | None) -> str:
+    if not name:
+        return "İsimsiz Kullanıcı"
+    
+    parts = name.strip().split()
+    masked_parts = []
+    for part in parts:
+        if len(part) > 1:
+            masked_parts.append(f"{part[0]}{'*' * (len(part)-1)}")
+        else:
+            masked_parts.append(f"{part}*")
+    return " ".join(masked_parts)
 
 
 def _user_has_purchased(db: Session, user_id: int, product_id: int) -> bool:
@@ -64,7 +71,7 @@ def _serialize_review(review: Review) -> ReviewResponse:
         id=review.id,
         product_id=review.product_id,
         user_id=review.user_id,
-        user_email=_mask_email(review.user.email),
+        user_name=_mask_name(getattr(review.user, 'full_name', None)) if getattr(review.user, 'full_name', None) else _mask_name("İsimsiz Kullanıcı"),
         rating=review.rating,
         comment=review.comment,
         created_at=review.created_at.isoformat() if review.created_at else None,

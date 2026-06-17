@@ -78,7 +78,16 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 gap-4">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 flex-shrink-0 group">
+          <Link 
+            href="/" 
+            className="flex items-center gap-3 flex-shrink-0 group"
+            onClick={(e) => {
+              if (pathname === '/') {
+                e.preventDefault();
+                window.location.reload();
+              }
+            }}
+          >
             <img src="/filamengo.png" alt="Filamengo Logo" className="h-12 w-12 object-contain transform group-hover:rotate-6 transition-transform duration-300" />
             <span className="hidden sm:block text-3xl font-black tracking-tighter text-orange-500 lowercase group-hover:text-orange-600 transition-colors">filamengo</span>
           </Link>
