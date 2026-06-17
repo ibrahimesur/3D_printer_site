@@ -53,10 +53,16 @@ def send_reset_password_email(to_email: str, token: str):
     msg.attach(part2)
 
     try:
-        with smtplib.SMTP(smtp_host, int(smtp_port)) as server:
-            server.starttls()
-            server.login(smtp_user, smtp_pass)
-            server.sendmail(sender_email, to_email, msg.as_string())
+        port = int(smtp_port)
+        if port == 465:
+            with smtplib.SMTP_SSL(smtp_host, port) as server:
+                server.login(smtp_user, smtp_pass)
+                server.sendmail(sender_email, to_email, msg.as_string())
+        else:
+            with smtplib.SMTP(smtp_host, port) as server:
+                server.starttls()
+                server.login(smtp_user, smtp_pass)
+                server.sendmail(sender_email, to_email, msg.as_string())
         return True
     except Exception as e:
         logger.error(f"Error sending email: {e}")
