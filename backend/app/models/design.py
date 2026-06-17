@@ -10,7 +10,7 @@ class Design(Base):
     __tablename__ = "designs"
 
     id = Column(Integer, primary_key=True, index=True)
-    creator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    creator_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     suggested_price = Column(Float, default=0.0)
@@ -21,7 +21,7 @@ class Design(Base):
     category = Column(String(50), nullable=True)
     filament_type = Column(String(50), nullable=True)
     color = Column(String(50), nullable=True)
-    is_approved = Column(Boolean, default=False)  # Admin onay durumu
+    is_approved = Column(Boolean, default=False, index=True)  # Admin onay durumu
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships
