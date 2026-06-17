@@ -1,5 +1,6 @@
 from datetime import timedelta, datetime
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 from jose import jwt, JWTError
@@ -83,9 +84,9 @@ async def register(data: UserRegister, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=Token)
-async def login(data: UserLogin, db: Session = Depends(get_db)):
+async def login(data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     """Kullanıcı girişi yapar ve JWT token döner."""
-    user = db.query(User).filter(User.email == data.email).first()
+    user = db.query(User).filter(User.email == data.username).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
