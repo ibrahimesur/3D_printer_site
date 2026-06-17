@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, JSON, ForeignKey
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 from app.db.base import Base
 
 class Product(Base):
@@ -21,6 +22,10 @@ class Product(Base):
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Relationships
+    design = relationship("Design", backref="products")
+    creator = relationship("User", backref="products")
 
     def __repr__(self):
         return f"<Product(id={self.id}, title={self.title}, price={self.price})>"
