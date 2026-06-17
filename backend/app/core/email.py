@@ -55,11 +55,11 @@ def send_reset_password_email(to_email: str, token: str):
     try:
         port = int(smtp_port)
         if port == 465:
-            with smtplib.SMTP_SSL(smtp_host, port) as server:
+            with smtplib.SMTP_SSL(smtp_host, port, timeout=5) as server:
                 server.login(smtp_user, smtp_pass)
                 server.sendmail(sender_email, to_email, msg.as_string())
         else:
-            with smtplib.SMTP(smtp_host, port) as server:
+            with smtplib.SMTP(smtp_host, port, timeout=5) as server:
                 server.starttls()
                 server.login(smtp_user, smtp_pass)
                 server.sendmail(sender_email, to_email, msg.as_string())
